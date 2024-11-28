@@ -1,7 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/atoms/button";
 import { Checkbox } from "@/components/atoms/checkbox";
@@ -19,8 +22,15 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/atoms/drawer";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/atoms/form";
 import { Input } from "@/components/atoms/input";
-import { Label } from "@/components/atoms/label";
 import { ScrollArea } from "@/components/atoms/scroll-area";
 import {
   Select,
@@ -35,45 +45,51 @@ import EmojiPicker from "@/components/molecules/emoji-picker";
 import TokenSelect from "@/components/molecules/select-token";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Token } from "@/types";
-// import { useTrustFundData } from "@/hooks/use-trust-fund-data";
 
 type TimeUnit = "minutes" | "hours" | "days" | "weeks";
 
 const tokens: Token[] = [
   {
-    symbol: "SLTT1",
-    name: "Starklens TToken 1",
+    symbol: "USDe",
+    name: "Ethena USD",
     address:
       "0x05528e1787f89bd1c9ed07dd25df7a0a6abe406fb1228ce44a185256b7162049",
   },
-  {
-    symbol: "SLTT2",
-    name: "Starklens TToken 2",
-    address:
-      "0x041766ce8357f8e21c3bec97f3d1490095613df4ee6b39385b43ee37a2d0fd60",
-  },
 ];
+
+const FormSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  token: z.any().refine((val) => val !== null, { message: "Token is required" }),
+  amount: z.number().min(1, { message: "Amount must be greater than 0" }),
+  description: z.string().optional(),
+  startValue: z.number().min(1),
+  startUnit: z.enum(["minutes", "hours", "days", "weeks"]),
+  endValue: z.number().min(1),
+  endUnit: z.enum(["minutes", "hours", "days", "weeks"]),
+  approvedCollectors: z.array(z.string())
+});
 
 const NewTrustFund = () => {
   const [emoji, setEmoji] = useState<string>("");
-  const [name, setName] = useState("");
-  const [token, setToken] = useState<Token | null>(null);
-  const [amount, setAmount] = useState(0);
-  const [description, setDescription] = useState("");
-  const [startValue, setStartValue] = useState(1);
-  const [startUnit, setStartUnit] = useState<TimeUnit>("hours");
-  const [endValue, setEndValue] = useState(10);
-  const [endUnit, setEndUnit] = useState<TimeUnit>("minutes");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [approvedCollectors, setApprovedCollectors] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
-
-  // const { addTrustFund } = useTrustFundData();
   const isDesktop = useMediaQuery("(min-width: 768px)");
-
   const emojiPickerContainerRef = useRef<HTMLDivElement>(null);
 
-  const timeUnits: TimeUnit[] = ["minutes", "hours", "days", "weeks"];
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      name: "",
+      token: null,
+      amount: 0,
+      description: "",
+      startValue: 1,
+      startUnit: "hours",
+      endValue: 10,
+      endUnit: "minutes",
+      approvedCollectors: []
+    }
+  });
 
   const getMilliseconds = (value: number, unit: TimeUnit) => {
     const multipliers = {
@@ -85,7 +101,7 @@ const NewTrustFund = () => {
     return value * multipliers[unit];
   };
 
-  const getUnixTimestamps = () => {
+  const getUnixTimestamps = (startValue: number, startUnit: TimeUnit, endValue: number, endUnit: TimeUnit) => {
     const now = Date.now();
     const startOffset = getMilliseconds(startValue, startUnit);
     const endOffset = getMilliseconds(endValue, endUnit);
@@ -96,44 +112,27 @@ const NewTrustFund = () => {
     return { startTimestamp, endTimestamp };
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setIsSubmitting(true);
 
-    if (!name || !token || !amount) {
-      toast.error("Please fill in all required fields.");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const { startTimestamp, endTimestamp } = getUnixTimestamps();
-
-      toast.success("Creating Trust Fund...");
-
-      // addTrustFund({
-      //   name,
-      //   amount,
-      //   description: null,
-      //   emojiCodePoint: emoji,
-      //   creator: "0x",
-      //   status: "Open",
-      //   tokenSymbol: token.symbol,
-      //   stream: 1,
-      //   startTimestamp,
-      //   endTimestamp,
-      //   approvedCollectors: [],
-      // });
+      const { startTimestamp, endTimestamp } = getUnixTimestamps(
+        data.startValue,
+        data.startUnit,
+        data.endValue,
+        data.endUnit
+      );
 
       console.log("Fund Details:", {
-        name,
-        description,
+        ...data,
+        emoji,
         startTimestamp,
         endTimestamp,
-        approvedCollectors,
       });
 
       toast.success("Trust Fund created successfully!");
+      setOpen(false);
+      form.reset();
     } catch (error) {
       console.error("Error creating trust fund:", error);
       toast.error(
@@ -143,145 +142,232 @@ const NewTrustFund = () => {
       );
     } finally {
       setIsSubmitting(false);
-      setOpen(false);
     }
   };
 
-  const handleMerchantToggle = (merchant: string) => {
-    setApprovedCollectors((prev) =>
-      prev.includes(merchant)
-        ? prev.filter((m) => m !== merchant)
-        : [...prev, merchant]
-    );
-  };
-
   const content = (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Label>General</Label>
-        <div className="flex space-x-2 items-center">
-          <EmojiPicker
-            emojiPickerContainerRef={emojiPickerContainerRef}
-            setSelectedEmoji={setEmoji}
-          />
-
-          <Input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Fund Name"
-          />
-        </div>
-        <div className="flex space-x-2">
-          <TokenSelect
-            tokens={tokens}
-            selectedToken={token}
-            onSelectToken={setToken}
-          />
-          <Input
-            type="number"
-            min="1"
-            value={amount}
-            onChange={(e) => setAmount(parseFloat(e.target.value))}
-            placeholder="Amount"
-          />
-        </div>
-        <Input
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description (optional)"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>Registration Time</Label>
-        <div className="flex items-center space-x-2">
-          <Input
-            type="number"
-            min="1"
-            value={startValue}
-            onChange={(e) => setStartValue(parseInt(e.target.value))}
-            className="w-20"
-          />
-          <Select
-            value={startUnit}
-            onValueChange={(value: TimeUnit) => setStartUnit(value)}
-          >
-            <SelectTrigger className="w-[110px]">
-              <SelectValue placeholder="Select unit" />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              {timeUnits.map((unit) => (
-                <SelectItem key={unit} value={unit}>
-                  {unit}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span>from now, it starts</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Input
-            type="number"
-            min="1"
-            value={endValue}
-            onChange={(e) => setEndValue(parseInt(e.target.value))}
-            className="w-20"
-          />
-          <Select
-            value={endUnit}
-            onValueChange={(value: TimeUnit) => setEndUnit(value)}
-          >
-            <SelectTrigger className="w-[110px]">
-              <SelectValue placeholder="Select unit" />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              <SelectGroup>
-                {timeUnits.map((unit) => (
-                  <SelectItem key={unit} value={unit}>
-                    {unit}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <span>later, it ends</span>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <span>
-          <h4 className="text-sm font-medium leading-none">Collectors</h4>
-          <h6 className="text-xs">
-            (optional registered collectors to gate recipients funds to)
-          </h6>
-        </span>
-        <ScrollArea className="h-32 rounded-md border">
-          <div className="p-4">
-            {tags.map((tag) => (
-              <React.Fragment key={tag}>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id={tag}
-                    checked={approvedCollectors.includes(tag)}
-                    onCheckedChange={() => handleMerchantToggle(tag)}
-                  />
-                  <label htmlFor={tag} className="text-sm cursor-pointer">
-                    {tag}
-                  </label>
-                </div>
-                <Separator className="my-2" />
-              </React.Fragment>
-            ))}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <FormLabel>General</FormLabel>
+          <div className="flex space-x-2 items-center">
+            <EmojiPicker
+              emojiPickerContainerRef={emojiPickerContainerRef}
+              setSelectedEmoji={setEmoji}
+            />
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input placeholder="Fund Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-        </ScrollArea>
-      </div>
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Creating Fund..." : "Create Fund"}
-      </Button>
-    </form>
+          <div className="flex space-x-2">
+            <FormField
+              control={form.control}
+              name="token"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <TokenSelect
+                      tokens={tokens}
+                      selectedToken={field.value}
+                      onSelectToken={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="Amount"
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input placeholder="Description (optional)" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FormLabel>Registration Time</FormLabel>
+          <div className="flex items-center space-x-2">
+            <FormField
+              control={form.control}
+              name="startValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      className="w-20"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="startUnit"
+              render={({ field }) => (
+                <FormItem>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white">
+                      <SelectGroup>
+                        {["minutes", "hours", "days", "weeks"].map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <span>from now, it starts</span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <FormField
+              control={form.control}
+              name="endValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      className="w-20"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="endUnit"
+              render={({ field }) => (
+                <FormItem>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white">
+                      <SelectGroup>
+                        {["minutes", "hours", "days", "weeks"].map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <span>later, it ends</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span>
+            <h4 className="text-sm font-medium leading-none">Collectors</h4>
+            <h6 className="text-xs">
+              (optional registered collectors to gate recipients funds to)
+            </h6>
+          </span>
+          <ScrollArea className="h-32 rounded-md border">
+            <div className="p-4">
+              {tags.map((tag) => (
+                <React.Fragment key={tag}>
+                  <div className="flex items-center gap-2">
+                    <FormField
+                      control={form.control}
+                      name="approvedCollectors"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value.includes(tag)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...field.value, tag]);
+                                } else {
+                                  field.onChange(field.value.filter((value) => value !== tag));
+                                }
+                              }}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <label className="text-sm cursor-pointer">
+                      {tag}
+                    </label>
+                  </div>
+                  <Separator className="my-2" />
+                </React.Fragment>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Creating Fund..." : "Create Fund"}
+        </Button>
+      </form>
+    </Form>
   );
 
   if (isDesktop) {
@@ -294,7 +380,7 @@ const NewTrustFund = () => {
         </div>
         <DialogContent
           ref={emojiPickerContainerRef}
-          className="sm:max-w-[425px] bg-white sm:rounded-2xl rounded-2xl"
+          className="flex flex-col gap-2 sm:max-w-[425px] bg-white sm:rounded-2xl rounded-2xl"
         >
           <DialogHeader>
             <DialogTitle>Create New Trust Fund</DialogTitle>
