@@ -10,9 +10,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/atoms/tabs";
-import FundLink from "@/components/molecules/link-fund";
 import Beneficiary from "@/components/organisms/beneficiary";
-import NewTrustFundRegistration from "@/components/organisms/new-trust-fund-registration";
+import NewTrustFundApplication from "@/components/organisms/trust-fund-application";
 
 const Fund = () => {
   return (
@@ -32,7 +31,7 @@ const Fund = () => {
             </TabsTrigger>
           </TabsList>
           <div className="flex items-center space-x-2">
-            <NewTrustFundRegistration />
+            <NewTrustFundApplication />
           </div>
         </div>
 
