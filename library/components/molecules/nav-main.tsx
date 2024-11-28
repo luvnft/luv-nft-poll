@@ -15,13 +15,13 @@ export function MainNav({
         href="/trust"
         className="text-sm font-medium transition-colors hover:text-primary"
       >
-        Trust
+        TRUST
       </Link>
       <Link
         href="/withdrawal"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        Withdrawal
+        WITHDRAWAL
       </Link>
     </nav>
   );
