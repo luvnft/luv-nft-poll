@@ -11,6 +11,7 @@ import {
   TabsTrigger,
 } from "@/components/atoms/tabs";
 import FundLink from "@/components/molecules/link-fund";
+import Beneficiary from "@/components/organisms/beneficiary";
 import NewTrustFundRegistration from "@/components/organisms/new-trust-fund-registration";
 
 const Fund = () => {
@@ -71,17 +72,19 @@ const Fund = () => {
           <h3 className="text-lg font-bold tracking-tight">Beneficiaries</h3>
 
           <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-            <FundLink
+            <Beneficiary
               id={0}
               name={"Don't know"}
               description={"Happy "}
-              emojiCodePoint={"1F600"}
+              avatarUrl={""}
+              address={"0x{string}"}
             />
-            <FundLink
+            <Beneficiary
               id={1}
               name={"Ethena Foundation"}
               description={"Happy Men"}
-              emojiCodePoint={"1F601"}
+              avatarUrl={""}
+              address={"0x{string}"}
             />
           </div>
         </TabsContent>
