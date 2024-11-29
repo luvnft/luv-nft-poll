@@ -77,6 +77,7 @@ const Fund = () => {
               description={"Happy "}
               avatarUrl={""}
               address={"0x{string}"}
+              percentage={70}
             />
             <Beneficiary
               id={1}
@@ -84,6 +85,7 @@ const Fund = () => {
               description={"Happy Men"}
               avatarUrl={""}
               address={"0x{string}"}
+              percentage={90}
             />
           </div>
         </TabsContent>
