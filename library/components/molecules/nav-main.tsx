@@ -18,10 +18,10 @@ export function MainNav({
         TRUST
       </Link>
       <Link
-        href="/collectable"
+        href="/collectables"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        COLLECTABLE
+        COLLECTABLES
       </Link>
     </nav>
   );

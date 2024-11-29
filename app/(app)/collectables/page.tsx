@@ -2,7 +2,6 @@
 
 import { AlertTriangle, Loader } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { Suspense, useState } from "react";
 import { Address } from "viem";
 
