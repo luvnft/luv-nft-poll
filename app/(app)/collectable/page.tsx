@@ -166,29 +166,12 @@ const CollectPage = () => {
 
 const CollectPageWithSuspense = () => {
   return (
-    <>
-      <header>
-        <h1 className="pt-4 px-4 font-semibold text-xl">Collect</h1>
-        <p className="px-4 pb-2 text-sm text-gray-700">
-          Collect and view funding flow details
-        </p>
-      </header>
-      <main className="rounded-2xl bg-[#F8F8F7] p-4 flex-1 flex flex-col gap-4">
-        <Alert>
-          <AlertTitle>Heads up!</AlertTitle>
-          <AlertDescription>
-            Have anyone on the{" "}
-            <Link href="/flows" className="text-[#FA4A57] hover:underline">
-              Flows
-            </Link>{" "}
-            page send you flows and its link to start collecting
-          </AlertDescription>
-        </Alert>
-        <Suspense fallback={<LoadingState />}>
-          <CollectPage />
-        </Suspense>
-      </main>
-    </>
+    <div className="flex-1 space-y-4 p-4 pt-6">
+      <h2 className="text-3xl font-bold tracking-tight">Collectables</h2>
+      <Suspense fallback={<LoadingState />}>
+        <CollectPage />
+      </Suspense>
+    </div>
   );
 };
 

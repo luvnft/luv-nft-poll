@@ -69,7 +69,7 @@ const CollectBody = (collect: {
 
   return (
     <div className="flex flex-col gap-4">
-      <Alert variant="destructive">
+      <Alert>
         <AlertDescription>
           Clicking <strong>Collect Funds</strong> batches your receivable,
           splittable and collectable funds.
@@ -124,10 +124,10 @@ const CollectBody = (collect: {
             {isReceiving || isReceiveStreamsProcessing
               ? "Processing Streams..."
               : isSpliting || isSplitProcessing
-                ? "Splitting Funds..."
-                : isCollecting || isCollectProcessing
-                  ? "Collecting..."
-                  : "Collect Funds"}
+              ? "Splitting Funds..."
+              : isCollecting || isCollectProcessing
+              ? "Collecting..."
+              : "Collect Funds"}
           </Button>
         </div>
       </div>
