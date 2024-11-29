@@ -1,5 +1,14 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
-import { Button } from "@/components/atoms/button";
+"use client";
+
+import { useModal } from "connectkit";
+import { Squircle } from "corner-smoothing";
+import {
+  useAccount,
+  useConnect as useConnect$1,
+  useDisconnect,
+  useEnsName,
+} from "wagmi";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,51 +16,74 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/atoms/dropdown-menu";
+import { useMounted } from "@/hooks/use-mounted";
+import { ellipsisAddress } from "@/utils";
+import { useCallback } from "react";
 
 export function UserNav() {
+  const { address, isConnected, chainId, chain } = useAccount();
+  const isMounted = useMounted();
+  const { disconnect } = useDisconnect();
+  const { reset } = useConnect$1();
+  const { setOpen } = useModal();
+  const { data: ensName } = useEnsName({
+    chainId: chainId,
+    address: address,
+  });
+
+  const handleDisconnect = useCallback(() => {
+    setOpen(false);
+    disconnect();
+    reset();
+  }, [disconnect, reset, setOpen]);
+
+  if (!isMounted) return null;
+
+  if (!isConnected && !address) {
+    return (
+      <Squircle cornerRadius={20} cornerSmoothing={1}>
+        <button
+          onClick={() => setOpen(true)}
+          className="bg-[#33CB82] hover:bg-[#33CB82]/80 font-medium px-6 rounded-[0] py-4 transition-colors duration-200"
+        >
+          Connect Wallet
+        </button>
+      </Squircle>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/avatars/01.png" alt="@shadcn" />
-            <AvatarFallback>SC</AvatarFallback>
-          </Avatar>
-        </Button>
+        <Squircle cornerRadius={20} cornerSmoothing={1}>
+          <button className="bg-[#33CB82] hover:bg-[#33CB82]/80 font-medium px-6 rounded-[0] py-4 transition-colors duration-200">
+            {ensName || ellipsisAddress(address || "")}
+          </button>
+        </Squircle>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">shadcn</p>
+            <p className="text-sm font-medium leading-none">Connected</p>
             <p className="text-xs leading-none text-muted-foreground">
-              m@example.com
+              {chain?.name}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setOpen(true)}>
             Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            Billing
-            <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            Settings
-            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          Log out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={handleDisconnect}>
+            Disconnect
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
