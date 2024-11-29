@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import "@/styles/globals.css";
+
+import CoreLayout from "@/components/template/layout-core";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://capyflows.vercel.app/"),
@@ -16,9 +17,5 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
+  return <CoreLayout>{children}</CoreLayout>;
 }
