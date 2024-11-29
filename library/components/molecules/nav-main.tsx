@@ -18,10 +18,10 @@ export function MainNav({
         TRUST
       </Link>
       <Link
-        href="/withdrawal"
+        href="/collectable"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        WITHDRAWAL
+        COLLECTABLE
       </Link>
     </nav>
   );
