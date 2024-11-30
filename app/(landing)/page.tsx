@@ -1,5 +1,5 @@
 import { AppleCardsCarouselDemo } from "@/components/organisms/example-cards";
-import { MoveUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 
@@ -49,7 +49,7 @@ const Home = () => {
             <button className="bg-emerald-400 hover:bg-emerald-500 font-medium p-5 rounded-3xl text-xl gap-20 flex items-center">
               Launch
               <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
-                <MoveUpRight strokeWidth={3} className=" text-emerald-400 " />
+                <ArrowUpRight strokeWidth={3} className=" text-emerald-400 " />
               </div>
             </button>
           </div>

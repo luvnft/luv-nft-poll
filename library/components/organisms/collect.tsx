@@ -9,7 +9,7 @@ import { Separator } from "@/components/atoms/separator";
 import { useDripsManagement } from "@/hooks/use-drips-management";
 import { FundingFlowState, Token } from "@/types";
 import { cn, ellipsisAddress } from "@/utils";
-import { MoveUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 const CollectHead = (collect: { token: Token }) => {
   const { optimalReceivableAmount, splittableAmount, collectableAmount } =
@@ -137,7 +137,7 @@ const CollectBody = (collect: {
               : "Collect Funds"}
           </p>
           <div className="w-7 h-7 rounded-full bg-[#191A23] flex justify-center items-center">
-            <MoveUpRight
+            <ArrowUpRight
               strokeWidth={3}
               width={16}
               className=" text-green-500 "
