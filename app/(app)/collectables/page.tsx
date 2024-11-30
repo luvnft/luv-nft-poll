@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Loader } from "lucide-react";
+import { AlertTriangle, Loader, MoveUpRight } from "lucide-react";
 import Image from "next/image";
 import { Suspense, useState } from "react";
 import { Address } from "viem";
@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/atoms/alert";
 import { Card } from "@/components/atoms/card";
 import { CollectBody, CollectHead } from "@/components/organisms/collect";
 import { FundingFlowState, Token } from "@/types";
+import { Input } from "@/components/atoms/input";
 
 type GroupedFlows = {
   token: Token;
@@ -95,28 +96,28 @@ const ErrorState = ({ error }: { error: Error }) => (
     <div className="flex flex-col items-center justify-center">
       <Image
         alt="errors happeneth"
-        src="https://illustrations.popsy.co/red/timed-out-error.svg"
-        width={350}
-        height={350}
+        src="error-state.svg"
+        width={120}
+        height={120}
       />
       <h2 className="text-sm text-center sm:text-xl text-black mt-4">
-        {error.message || "Errors happeneth"}
+        {error.message || <>Oups no trust available for <br /> this address</>}
       </h2>
     </div>
   </div>
 );
 
 const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center h-full gap-4">
+  <div className="flex flex-col items-center justify-center h-full ">
     <div className="flex flex-col items-center justify-center">
       <Image
         alt="empty state"
-        src="https://illustrations.popsy.co/red/earning-money.svg"
-        width={350}
-        height={350}
+        src="empty-state.svg"
+        width={120}
+        height={120}
       />
       <h2 className="text-sm text-center sm:text-xl text-black mt-4">
-        Empty flows, full potential. Cast away!
+      Available streams will show <br /> here after scan
       </h2>
     </div>
   </div>
@@ -125,8 +126,8 @@ const EmptyState = () => (
 const CollectFlows = ({ groupedFlows }: { groupedFlows: GroupedFlows[] }) => (
   <Accordion type="multiple" className="w-full flex flex-col gap-2">
     {groupedFlows.map((group, index) => (
-      <Card key={index} className="rounded-lg p-0">
-        <AccordionItem value={`${index}`} className="border-b-0">
+      // <Card key={index} className="rounded-lg p-0">
+        <AccordionItem key={index} value={`${index}`} className="border-b">
           <AccordionTrigger className="p-4">
             <CollectHead token={group.token} />
           </AccordionTrigger>
@@ -137,13 +138,14 @@ const CollectFlows = ({ groupedFlows }: { groupedFlows: GroupedFlows[] }) => (
             />
           </AccordionContent>
         </AccordionItem>
-      </Card>
+      // </Card>
     ))}
   </Accordion>
 );
 
 const CollectPage = () => {
   const [groupedFlows, setGroupedFlows] = useState(sampleGroupedFlows);
+  // const [groupedFlows, setGroupedFlows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -167,9 +169,33 @@ const CollectPageWithSuspense = () => {
   return (
     <div className="flex-1 space-y-4 p-4 pt-6">
       <h2 className="text-3xl font-bold tracking-tight">Collectables</h2>
-      <Suspense fallback={<LoadingState />}>
-        <CollectPage />
-      </Suspense>
+      <div className=" flex-1 flex items-center justify-center">
+        <div className=" rounded-3xl border border-gray-200 p-3 md:p-7 max-w-2xl w-full overflow-auto min-h-[640px] flex flex-col gap-7">
+          {/* header */}
+          <div className=" flex flex-col gap-5 mx-[-28px] px-7 border-b border-gray-200">
+            <p className=" font-medium text-xl">Welcome to withdrawals</p>
+            <p>Scan address to request funds and claim USDe</p>
+            <div className="flex items-center gap-2.5 mb-6">
+              <input
+                type="text"
+                placeholder="Paste wallet address here"
+                className="flex-1 border px-7 rounded-lg h-[50px] text-sm outline-none focus:ring-1 focus:ring-green-500"
+              />
+              <button className="bg-green-500 rounded-lg h-[50px] px-4 flex items-center gap-5">
+                Scan
+                <div className="w-7 h-7 rounded-full bg-[#191A23] flex justify-center items-center">
+                  <MoveUpRight strokeWidth={3} width={16} className=" text-green-500 " />
+                </div>
+              </button>
+            </div>
+          </div>
+
+
+          <Suspense fallback={<LoadingState />}>
+            <CollectPage />
+          </Suspense>
+        </div>
+      </div>
     </div>
   );
 };
