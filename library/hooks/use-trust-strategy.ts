@@ -73,7 +73,12 @@ type FunctionParams = {
   };
   registerRecipient: {
     poolId: bigint;
-    data: `0x${string}`;
+    data: {
+      recipientAddress: Address;
+      name: string;
+      avatar: string;
+      bio: string;
+    };
   };
   updateRecipientStatus: {
     recipientId: Address;
@@ -223,7 +228,18 @@ export function useTrustStrategy() {
         abi: ALLO_ABI,
         address: ALLO_ADDRESS,
         functionName: "registerRecipient",
-        args: [params.poolId, params.data],
+        args: [
+          params.poolId,
+          encodeAbiParameters(
+            parseAbiParameters("address, string, string, string"),
+            [
+              params.data.recipientAddress,
+              params.data.name,
+              params.data.avatar,
+              params.data.bio,
+            ]
+          ),
+        ],
       });
       return writeContract(config, request);
     },
