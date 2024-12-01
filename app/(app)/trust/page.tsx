@@ -1,8 +1,11 @@
 "use client";
 
+import { defineStepper } from "@stepperize/react";
 import { ConnectKitButton } from "connectkit";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useAccount } from "wagmi";
+
 import { Button } from "@/components/atoms/button";
 import {
   Card,
@@ -13,20 +16,17 @@ import {
 } from "@/components/atoms/card";
 import { Input } from "@/components/atoms/input";
 import { Separator } from "@/components/atoms/separator";
-import { defineStepper } from "@stepperize/react";
-import useStore from "@/store";
-import { useTrustStrategy } from "@/hooks/use-trust-strategy";
-import { Address } from "viem";
-import FundLink from "@/components/molecules/link-fund";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/atoms/tabs";
+import FundLink from "@/components/molecules/link-fund";
 import NewTrustFund from "@/components/organisms/new-trust-fund";
-import { toast } from "sonner";
 import { useMounted } from "@/hooks/use-mounted";
+import { useTrustStrategy } from "@/hooks/use-trust-strategy";
+import useStore from "@/store";
 
 const { useStepper, steps } = defineStepper(
   {
@@ -344,7 +344,8 @@ const TrustPage = () => {
   const isMounted = useMounted();
 
   const renderContent = useCallback(() => {
-    if (!profile.id) { // TODO: you can put true here to trigger the loading state
+    if (!profile.id) {
+      // TODO: you can put true here to trigger the loading state
       return <LoadingState />;
     }
     if (error) {
