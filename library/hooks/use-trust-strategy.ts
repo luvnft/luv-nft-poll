@@ -14,6 +14,7 @@ import {
   encodeAbiParameters,
   erc20Abi,
   parseAbiParameters,
+  parseUnits,
   zeroAddress,
 } from "viem";
 import { readContract } from "wagmi/actions";
@@ -48,14 +49,9 @@ type FunctionParams = {
     token: Address;
     amount: bigint;
   };
-  deployTrust: {
+  createStrategy: {
     name: string;
     description?: string;
-    amount: bigint;
-    registrationStartTimestamp: number;
-    registrationEndTimestamp: number;
-    allocationStartTimestamp: number;
-    allocationEndTimestamp: number;
   };
   createPool: {
     profileId: `0x${string}`;
@@ -65,6 +61,15 @@ type FunctionParams = {
     amount: bigint;
     metadata: Metadata;
     managers: Address[];
+  };
+  deployTrust: {
+    name: string;
+    description?: string;
+    amount: bigint;
+    registrationStartTimestamp: number;
+    registrationEndTimestamp: number;
+    allocationStartTimestamp: number;
+    allocationEndTimestamp: number;
   };
   registerRecipient: {
     poolId: bigint;
@@ -86,39 +91,49 @@ type FunctionParams = {
 };
 
 export function useTrustStrategy() {
-  const { profile, token, setCurrentProfile } = useStore();
+  const { profile, token } = useStore();
   const createProfile = useCallback(
     async (params: FunctionParams["createProfile"]) => {
-      const { request, result } = await simulateContract(config, {
-        abi: REGISTRY_ABI,
-        address: REGISTRY_ADDRESS,
-        functionName: "createProfile",
-        args: [
-          params.nonce,
-          params.name,
-          params.metadata,
-          params.owner,
-          params.members,
-        ],
-      });
+      try {
+        const { request, result } = await simulateContract(config, {
+          abi: REGISTRY_ABI,
+          address: REGISTRY_ADDRESS,
+          functionName: "createProfile",
+          args: [
+            params.nonce,
+            params.name,
+            params.metadata,
+            params.owner,
+            params.members,
+          ],
+        });
 
-      // TODO: If error we get is NONCE_NOT_AVAILABLE increment nonce then setCurrentProfile
-      const receipt = writeContract(config, request);
-
-      setCurrentProfile(params.name, result);
-      return receipt;
+        const receipt = await writeContract(config, request);
+        return { id: result, createProfileTx: receipt };
+      } catch (error) {
+        throw error;
+      }
     },
     []
   );
 
-  const createStrategy = async () => {
+  const getTokenDecimals = async (tokenAddress: Address) => {
+    const decimals = await readContract(config, {
+      abi: erc20Abi,
+      address: tokenAddress,
+      functionName: "decimals",
+    });
+    return decimals;
+  };
+
+  const createStrategy = async (params: FunctionParams["createStrategy"]) => {
     const { request, result } = await simulateContract(config, {
       abi: CAPY_STRATEGY_FACTORY_ABI,
       address: CAPY_STRATEGY_FACTORY_ADDRESS,
       functionName: "createStrategy",
     });
 
-    const receipt = writeContract(config, request);
+    const receipt = await writeContract(config, request);
     return { strategy: result, createStrategyTx: receipt };
   };
 
@@ -165,17 +180,18 @@ export function useTrustStrategy() {
 
   const deployTrust = useCallback(
     async (params: FunctionParams["deployTrust"]) => {
-      console.log("Fund Details:", params);
-
       if (!profile.id || !token) {
         throw new Error("Please initialize your trust fund space first");
       }
 
-      const { strategy, createStrategyTx } = await createStrategy();
+      const decimals = await getTokenDecimals(token);
+      params.amount = parseUnits(params.amount.toString(), decimals);
 
       const approveAlloTx = await approveAllo({ token, amount: params.amount });
 
-      const poolParams = {
+      const { strategy, createStrategyTx } = await createStrategy(params);
+
+      const createPoolTx = await createPool({
         ...params,
         profileId: profile.id,
         strategy,
@@ -193,10 +209,8 @@ export function useTrustStrategy() {
           protocol: BigInt(0),
           pointer: "",
         },
-        managers: [] as Address[],
-      };
-
-      const createPoolTx = createPool(poolParams);
+        managers: [],
+      });
 
       return { createStrategyTx, approveAlloTx, createPoolTx };
     },
