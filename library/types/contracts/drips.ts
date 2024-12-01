@@ -1,6 +1,6 @@
 const data = {
   name: "Drips",
-  address: "",
+  address: "0xC776EFe2B6EaA34AF16Bc01e98081775E51C7103",
   abi: [
     {
       inputs: [],

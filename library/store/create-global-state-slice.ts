@@ -7,11 +7,11 @@ type State = {
     name: string;
     id: Address | null;
   };
-  token: Address | null;
+  token: Address;
 };
 
 type Actions = {
-  setCurrentProfile: (name: string, id: Address) => void;
+  setCurrentProfile: (profile: { name: string; id: Address }) => void;
   clearCurrentProfile: () => void;
   setToken: (token: Address) => void;
 };
@@ -24,11 +24,11 @@ export default persist(
       name: "",
       id: null,
     },
-    token: null,
+    token: "0x9A676e781A523b5d0C0e43731313A708CB607508",
 
-    setCurrentProfile: (name, id) =>
+    setCurrentProfile: (profile: { name: string; id: Address }) =>
       set((state) => {
-        state.profile = { name, id };
+        state.profile = profile;
       }),
 
     clearCurrentProfile: () =>
