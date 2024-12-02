@@ -1,6 +1,5 @@
 import { simulateContract, writeContract } from "@wagmi/core";
 import { useCallback } from "react";
-import { toast } from "sonner";
 
 import { config } from "@/providers/wagmi/config";
 import useStore from "@/store";
@@ -17,7 +16,7 @@ import {
   parseUnits,
   zeroAddress,
 } from "viem";
-import { readContract } from "wagmi/actions";
+import { getBytecode, readContract } from "wagmi/actions";
 
 const REGISTRY_ADDRESS = registry.address as `0x${string}`;
 const ALLO_ADDRESS = allo.address as `0x${string}`;
@@ -47,10 +46,12 @@ type FunctionParams = {
   };
   approveAllo: {
     token: Address;
+    address: Address;
     amount: bigint;
   };
   createStrategy: {
     name: string;
+    avatarUrl?: string;
     description?: string;
   };
   createPool: {
@@ -64,7 +65,9 @@ type FunctionParams = {
   };
   deployTrust: {
     name: string;
+    avatarUrl?: string;
     description?: string;
+    address: Address;
     amount: bigint;
     registrationStartTimestamp: number;
     registrationEndTimestamp: number;
@@ -76,7 +79,7 @@ type FunctionParams = {
     data: {
       recipientAddress: Address;
       name: string;
-      avatar: string;
+      avatarUrl?: string;
       bio: string;
     };
   };
@@ -95,7 +98,7 @@ type FunctionParams = {
   };
 };
 
-export function useTrustStrategy() {
+const useCapyProtocol = () => {
   const { profile, token } = useStore();
   const createProfile = useCallback(
     async (params: FunctionParams["createProfile"]) => {
@@ -136,6 +139,7 @@ export function useTrustStrategy() {
       abi: CAPY_STRATEGY_FACTORY_ABI,
       address: CAPY_STRATEGY_FACTORY_ADDRESS,
       functionName: "createStrategy",
+      args: [params.name, params.avatarUrl || "", params.description || ""],
     });
 
     const receipt = await writeContract(config, request);
@@ -147,8 +151,10 @@ export function useTrustStrategy() {
       abi: erc20Abi,
       address: params.token,
       functionName: "allowance",
-      args: [params.token, ALLO_ADDRESS],
+      args: [params.address, ALLO_ADDRESS],
     });
+
+    console.log(allowance);
 
     // If allowance is sufficient, no need to approve again
     if (allowance >= params.amount) {
@@ -192,9 +198,32 @@ export function useTrustStrategy() {
       const decimals = await getTokenDecimals(token);
       params.amount = parseUnits(params.amount.toString(), decimals);
 
-      const approveAlloTx = await approveAllo({ token, amount: params.amount });
+      const approveAlloTx = await approveAllo({
+        token,
+        address: params.address,
+        amount: params.amount,
+      });
 
       const { strategy, createStrategyTx } = await createStrategy(params);
+
+      // Wait for strategy to be deployed and verified
+      let strategyExists = false;
+      while (!strategyExists) {
+        try {
+          const code = await getBytecode(config, {
+            address: strategy,
+          });
+          if (code !== "0x" && code) {
+            strategyExists = true;
+          } else {
+            // Wait 1 second before checking again
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          // If error occurs (e.g. contract not found), wait and retry
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
 
       const createPoolTx = await createPool({
         ...params,
@@ -235,7 +264,7 @@ export function useTrustStrategy() {
             [
               params.data.recipientAddress,
               params.data.name,
-              params.data.avatar,
+              params.data.avatarUrl || "",
               params.data.bio,
             ]
           ),
@@ -293,4 +322,6 @@ export function useTrustStrategy() {
     distribute,
     fundsOut,
   };
-}
+};
+
+export default useCapyProtocol;
