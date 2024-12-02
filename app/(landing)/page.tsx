@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AppleCardsCarouselDemo } from "@/components/organisms/example-cards";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
@@ -24,9 +26,11 @@ const Home = () => {
               className="hidden md:block"
             />
           </div>
-          <button className=" border md:text-xl border-[#191A23] font-medium py-5 md:px-9 px-6 rounded-3xl">
-            Launch App
-          </button>
+          <Link href="/trust">
+            <button className="border md:text-xl border-[#191A23] font-medium py-5 md:px-9 px-6 rounded-3xl">
+              Launch App
+            </button>
+          </Link>
         </header>
 
         <div className="flex flex-col md:flex-row  justify-between gap-10">
@@ -46,12 +50,17 @@ const Home = () => {
               connect those who want to help, those who need help, and those who
               can provide specialized support.
             </p>
-            <button className="bg-emerald-400 hover:bg-emerald-500 font-medium p-5 rounded-3xl text-xl gap-20 flex items-center">
-              Launch
-              <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
-                <ArrowUpRight strokeWidth={3} className=" text-emerald-400 " />
-              </div>
-            </button>
+            <Link href="/trust">
+              <button className="bg-emerald-400 hover:bg-emerald-500 font-medium p-5 rounded-3xl text-xl gap-20 flex items-center">
+                Launch
+                <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
+                  <ArrowUpRight
+                    strokeWidth={3}
+                    className=" text-emerald-400 "
+                  />
+                </div>
+              </button>
+            </Link>
           </div>
         </div>
       </div>

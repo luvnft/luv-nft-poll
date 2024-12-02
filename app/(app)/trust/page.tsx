@@ -27,6 +27,7 @@ import NewTrustFund from "@/components/organisms/new-trust-fund";
 import { useMounted } from "@/hooks/use-mounted";
 import { useTrustStrategy } from "@/hooks/use-trust-strategy";
 import useStore from "@/store";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 
 const { useStepper, steps } = defineStepper(
   {
@@ -166,62 +167,72 @@ const LoadingState = () => {
   }, [isConnected, stepper]);
 
   return (
-    <Card className="w-[450px] p-6">
-      <div className="flex justify-between mb-6">
-        <h2 className="text-lg font-medium">Setup CapyFlows</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            Step {stepper.current.index + 1} of {steps.length}
-          </span>
-        </div>
-      </div>
+    <div className=" none md:flex fixed inset-0 items-center justify-center">
+      <Card className="w-[900px] p-6 flex flex-col md:flex-row items-center gap-20">
+        <div>
+          <div className="flex justify-between mb-6">
+            <h2 className="text-lg font-medium">Setup CapyFlows</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Step {stepper.current.index + 1} of {steps.length}
+              </span>
+            </div>
+          </div>
 
-      <nav aria-label="Setup Steps" className="group mb-6">
-        <ol className="flex flex-col gap-2">
-          {stepper.all.map((step, index, array) => (
-            <React.Fragment key={step.id}>
-              <li className="flex items-center gap-4">
-                <Button
-                  type="button"
-                  variant={
-                    index <= stepper.current.index ? "default" : "secondary"
-                  }
-                  className="flex size-10 items-center justify-center rounded-full"
-                  disabled={!isConnected && step.id !== "connect"}
-                >
-                  {index + 1}
-                </Button>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{step.title}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {step.description}
-                  </span>
-                </div>
-              </li>
-              {index < array.length - 1 && (
-                <div className="ml-5 py-4">
-                  <Separator
-                    orientation="vertical"
-                    className={`h-full ${
-                      index < stepper.current.index ? "bg-primary" : "bg-muted"
-                    }`}
-                  />
-                </div>
-              )}
-              {stepper.current.id === step.id && (
-                <div className="ml-14 mb-4">
-                  {stepper.switch({
-                    connect: () => <WalletComponent />,
-                    profile: () => <ProfileComponent />,
-                    complete: () => <CompleteComponent />,
-                  })}
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </ol>
-      </nav>
-    </Card>
+          <nav aria-label="Setup Steps" className="group mb-6">
+            <ol className="flex flex-col gap-2">
+              {stepper.all.map((step, index, array) => (
+                <React.Fragment key={step.id}>
+                  <li className="flex items-center gap-4">
+                    <Button
+                      type="button"
+                      variant={
+                        index <= stepper.current.index ? "default" : "secondary"
+                      }
+                      className="flex size-10 items-center justify-center rounded-full"
+                      disabled={!isConnected && step.id !== "connect"}
+                    >
+                      {index + 1}
+                    </Button>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{step.title}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {step.description}
+                      </span>
+                    </div>
+                  </li>
+                  {index < array.length - 1 && (
+                    <div className="ml-5 py-4">
+                      <Separator
+                        orientation="vertical"
+                        className={`h-full ${
+                          index < stepper.current.index
+                            ? "bg-primary"
+                            : "bg-muted"
+                        }`}
+                      />
+                    </div>
+                  )}
+                  {stepper.current.id === step.id && (
+                    <div className="ml-14 mb-4">
+                      {stepper.switch({
+                        connect: () => <WalletComponent />,
+                        profile: () => <ProfileComponent />,
+                        complete: () => <CompleteComponent />,
+                      })}
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </ol>
+          </nav>
+        </div>
+
+        <div className="md:w-1/2 order-1 md:order-2">
+          <img src="test.svg" alt="On-chain token distribution" className="" />
+        </div>
+      </Card>
+    </div>
   );
 };
 
@@ -230,6 +241,60 @@ const ErrorState = ({ error }: { error: Error }) => (
 );
 
 const Content = () => {
+  const data = [
+    {
+      name: "Ethena Foundation",
+      description: "Happy young men",
+      avatar: "https://github.com/shadcn.png",
+      avatarFallback: "EF",
+    },
+    {
+      name: "Skyline Ventures",
+      description: "Empowering ideas",
+      avatar: "https://github.com/shadcn.png",
+      avatarFallback: "SV",
+    },
+    {
+      name: "Alpha Tech",
+      description: "Innovating the future",
+      avatar: "https://github.com/shadcn.png",
+      avatarFallback: "AT",
+    },
+    {
+      name: "Global Impact",
+      description: "Making a difference",
+      avatar: "https://github.com/shadcn.png",
+      avatarFallback: "GI",
+    },
+    {
+      name: "Pixel Perfect",
+      description: "Designing dreams",
+      avatar: "https://github.com/shadcn.png",
+      avatarFallback: "PP",
+    },
+    {
+      name: "NextGen Solutions",
+      description: "Solutions that matter",
+      avatar: "https://github.com/shadcn.png",
+      avatarFallback: "NG",
+    },
+    {
+      name: "Summit Innovators",
+      description: "Scaling heights",
+      avatar: "https://github.com/shadcn.png",
+      avatarFallback: "SI",
+    },
+  ];
+  const latestData = data.slice(-5);
+
+  const recentActions = [
+    { action: "Uploaded a new file", date: "2024-12-01" },
+    { action: "Edited profile settings", date: "2024-11-30" },
+    { action: "Commented on a post", date: "2024-11-29" },
+    { action: "Joined a new project", date: "2024-11-28" },
+    { action: "Completed a task", date: "2024-11-27" },
+  ];
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6">
       <h2 className="text-3xl font-bold tracking-tight">Trust Dashboard</h2>
@@ -301,8 +366,31 @@ const Content = () => {
               <CardHeader>
                 <CardTitle>Funding Summary</CardTitle>
               </CardHeader>
-              <CardContent>something here</CardContent>
+              <CardContent>
+                {/* something here */}
+                <div className="flex gap-3 flex-col">
+                  {latestData.map((item, index) => (
+                    <React.Fragment key={index}>
+                      <div className="flex items-center gap-4">
+                        <Avatar>
+                          <AvatarImage src={item.avatar} alt={item.name} />
+                          <AvatarFallback>{item.avatarFallback}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p>{item.name}</p>
+                          <p className=" text-gray-500 text-sm">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                      {/* Add Separator except after the last item */}
+                      {index < latestData.length - 1 && <Separator />}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </CardContent>
             </Card>
+
             <Card className="col-span-3">
               <CardHeader>
                 <CardTitle>Recent Actions</CardTitle>
@@ -310,7 +398,21 @@ const Content = () => {
                   You took 265 actions this month.
                 </CardDescription>
               </CardHeader>
-              <CardContent>something here</CardContent>
+              <CardContent>
+                <ul className="space-y-3">
+                  {recentActions.map((item, index) => (
+                    <React.Fragment key={index}>
+                      <li className="flex justify-between">
+                        <span>{item.action}</span>
+                        <span className="text-sm text-gray-500">
+                          {item.date}
+                        </span>
+                      </li>
+                      {index < recentActions.length - 1 && <Separator />}
+                    </React.Fragment>
+                  ))}
+                </ul>
+              </CardContent>
             </Card>
           </div>
         </TabsContent>
