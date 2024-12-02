@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import {
@@ -6,23 +7,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/atoms/card";
-import Emoji from "@/components/atoms/emoji";
+import { isValidUrl } from "@/utils";
 
 interface FundLink {
-  id: number;
+  strategyAddress: string;
   name: string;
   description: string;
-  emojiCodePoint: string;
+  avatarUrl: string;
 }
 
-const FundLink = ({ id, name, description, emojiCodePoint }: FundLink) => (
-  <Link href={`/trust/${id}`}>
+const FundLink = ({ strategyAddress, name, description, avatarUrl }: FundLink) => (
+  <Link href={`/trust/${strategyAddress}`}>
     <Card className="h-full transition-shadow hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">
-          <Emoji
-            emoji={emojiCodePoint}
-            className="inline-block text-4xl !no-underline"
+          <Image
+            src={isValidUrl(avatarUrl) || `https://avatar.vercel.sh/${strategyAddress}`}
+            alt={`${name} logo`}
+            width={48}
+            height={48}
+            className="aspect-[1] rounded-full object-cover"
           />
         </CardTitle>
       </CardHeader>
