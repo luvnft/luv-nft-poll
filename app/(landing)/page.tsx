@@ -51,7 +51,7 @@ const Home = () => {
               can provide specialized support.
             </p>
             <Link href="/trust">
-              <button className="bg-emerald-400 hover:bg-emerald-500 font-medium p-5 rounded-3xl text-xl gap-20 flex items-center">
+              <button className=" font-medium p-5 rounded-3xl text-xl gap-20 flex items-center bg-[#33CB82] hover:bg-[#33CB82]/80 transition-colors duration-200 ">
                 Launch
                 <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
                   <ArrowUpRight
@@ -77,10 +77,13 @@ const Home = () => {
         {/* Solution Content */}
         <div className=" md:p-12 py-5 md:w-1/2 flex flex-col gap-8 md:gap-20 md:my-[-16px] md:border-l">
           <div className="">
-            {[...Array(10)].map((_, idx) => (
+            {[
+              "Traditional donations often feel disconnected - donors give and hope for the best",
+              "Beneficiaries sometimes need more than just money - they need guidance or services",
+              "Service providers (Collectors) want to help but need sustainable ways to do so",
+            ].map((p, idx) => (
               <p key={idx} className=" text-xl md:text-4xl mb-8 md:mb-20 ">
-                Traditional donations often feel disconnected - donors give and
-                hope for the best
+                {p}
               </p>
             ))}
           </div>
@@ -89,9 +92,14 @@ const Home = () => {
 
       <AppleCardsCarouselDemo />
       <div className=" flex items-center justify-center">
-        <button className=" border md:text-xl border-[#191A23] font-medium py-5 md:px-9 px-6 rounded-3xl">
+        <Link
+          href="https://github.com/kelvinpraises/capyflow"
+          target="_blank"
+          rel="noopener noreferrer"
+          className=" border md:text-xl border-[#191A23] font-medium py-5 md:px-9 px-6 rounded-3xl"
+        >
           GitHub Repository
-        </button>
+        </Link>
       </div>
     </div>
   );

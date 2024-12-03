@@ -5,13 +5,13 @@ import { Card, Carousel } from "../molecules/apple-cards-carousel";
 
 export function AppleCardsCarouselDemo() {
   const cards = data.map((card, index) => (
-    <Card key={card.src} card={card} index={index} />
+    <Card key={index} card={card} index={index} />
   ));
 
   return (
     <div className="w-full h-full">
       <h2 className="max-w-7xl pl-4 mx-auto text-xl md:text-6xl font-medium ">
-        Get to know your iSad.
+        An Onchain trust triangle example
       </h2>
       <Carousel items={cards} />
     </div>
@@ -53,39 +53,55 @@ const DummyContent = () => {
 const data = [
   {
     category: "Business",
-    title: "Business grants where donors fund entrepreneurs, and business mentors get compensated for guidance",
-    src: "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?q=80&w=3556&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    title:
+      "Business grants where donors fund entrepreneurs, and business mentors get compensated for guidance",
+    arrow: "#33CB82",
     content: <DummyContent />,
+    bg: "bg-black",
   },
   {
     category: "Education",
-    title: "Education funds where donors support students, and approved tutors/schools can provide services",
-    src: "https://images.unsplash.com/photo-1531554694128-c4c6665f59c2?q=80&w=3387&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    title:
+      "Education funds where donors support students, and approved tutors/schools can provide services",
+    arrow: "#FFDF52",
+    opacity: 0.6,
+    bg: "bg-emerald-400",
     content: <DummyContent />,
   },
   {
     category: "Health",
-    title: "Business grants where donors fund entrepreneurs, and business mentors get compensated for guidance",
-    src: "https://images.unsplash.com/photo-1713869791518-a770879e60dc?q=80&w=2333&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-
-  {
-    category: "Product",
-    title: "Maps for your iPhone 15 Pro Max.",
-    src: "https://images.unsplash.com/photo-1599202860130-f600f4948364?q=80&w=2515&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    title:
+      "A medical fund where donors contribute, beneficiaries get treatment, and pre-approved healthcare providers get paid directly",
+    arrow: "#000000",
+    opacity: 0.2,
+    bg: "bg-yellow-300",
     content: <DummyContent />,
   },
   {
-    category: "iOS",
-    title: "Photography just got better.",
-    src: "https://images.unsplash.com/photo-1602081957921-9137a5d6eaee?q=80&w=2793&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    category: "Disaster Relief",
+    title:
+      "Donors contribute to relief efforts, pre-approved aid organizations receive funds, and beneficiaries receive support.",
+    arrow: "#FF5733", // Vibrant coral red
+    opacity: 0.6,
+    bg: "bg-purple-700", // A bold purple for contrast and urgency
     content: <DummyContent />,
   },
   {
-    category: "Hiring",
-    title: "Hiring for a Staff Software Engineer",
-    src: "https://images.unsplash.com/photo-1511984804822-e16ba72f5848?q=80&w=2048&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    category: "Environmental Conservation",
+    title:
+      "Donors support reforestation efforts, approved tree-planting organizations receive funds, and satellite imaging verifies the progress.",
+    arrow: "#79fdd1", // Soft teal for a refreshing nature vibe
+    opacity: 0.5,
+    bg: "bg-teal-500", // A vibrant teal-green reflecting nature
+    content: <DummyContent />,
+  },
+  {
+    category: "Real Estate Crowdfunding",
+    title:
+      "Investors fund property development, contractors complete projects, and property managers receive payment for maintenance.",
+    arrow: "#8B572A", // Rich warm brown to symbolize earth/structure
+    opacity: 0.4,
+    bg: "bg-yellow-400", // Bright orange for a welcoming tone
     content: <DummyContent />,
   },
 ];
