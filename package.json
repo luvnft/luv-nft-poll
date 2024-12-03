@@ -32,6 +32,7 @@
     "cmdk": "^1.0.0",
     "connectkit": "^1.8.2",
     "corner-smoothing": "^0.1.5",
+    "date-fns": "^4.1.0",
     "emoji-picker-react": "^4.5.2",
     "framer-motion": "^11.2.10",
     "immer": "^10.1.1",
