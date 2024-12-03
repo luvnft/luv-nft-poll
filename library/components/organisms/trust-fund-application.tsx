@@ -33,6 +33,9 @@ import { Input } from "@/components/atoms/input";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Textarea } from "../atoms/text-area";
 import { Label } from "../atoms/label";
+import useCapyProtocol from "@/hooks/use-capy-protocol";
+import { Address } from "viem";
+import { useAccount } from "wagmi";
 
 const FormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -47,10 +50,14 @@ const FormSchema = z.object({
     }),
 });
 
-const TrustFundApplication = () => {
+interface TrustFundApplicationParams {}
+
+const TrustFundApplication = ({ poolId }: { poolId: bigint }) => {
+  const { registerRecipient } = useCapyProtocol();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { address } = useAccount();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -62,10 +69,23 @@ const TrustFundApplication = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (!address) {
+      throw new Error("please connect wallet");
+    }
+
     setIsSubmitting(true);
 
     try {
-      // TODO: Send to the blockchain
+      await registerRecipient({
+        poolId: poolId,
+        data: {
+          recipientAddress: address,
+          name: data.name,
+          avatarUrl: data.avatarUrl,
+          bio: data.bio,
+        },
+      });
+      
       toast.success("Trust fund application successful!");
 
       setOpen(false);
