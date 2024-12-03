@@ -26,6 +26,7 @@ export interface Participant {
   name: string;
   avatar: string;
   bio: string;
+  allocation: bigint;
   status:
     | "None"
     | "Pending"
@@ -35,7 +36,6 @@ export interface Participant {
     | "InReview"
     | "Canceled";
 }
-
 export interface Strategy {
   name: string;
   description: string;
@@ -44,21 +44,32 @@ export interface Strategy {
   blockTimestamp: number;
   poolSize: bigint;
   poolId: bigint;
+  registrationStartTime: bigint;
+  registrationEndTime: bigint;
+  allocationStartTime: bigint;
+  allocationEndTime: bigint;
 }
 
 const useFundData = (strategyAddress?: Address) => {
   const strategyQuery = useQuery<Strategy>({
     queryKey: ["strategy", strategyAddress],
     queryFn: async () => {
-      const [strategyResponse, poolSizeResponse, poolIdResponse] =
-        await Promise.all([
-          fetch("http://localhost:8000/subgraphs/name/capy-strategy", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              query: `
+      const [
+        strategyResponse,
+        poolSizeResponse,
+        poolIdResponse,
+        registrationStartTimeResponse,
+        registrationEndTimeResponse,
+        allocationStartTimeResponse,
+        allocationEndTimeResponse,
+      ] = await Promise.all([
+        fetch("http://localhost:8000/subgraphs/name/capy-strategy", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: `
               query GetStrategy($address: String!) {
                 strategyCreateds(
                   where: { strategyAddress: $address }
@@ -72,20 +83,40 @@ const useFundData = (strategyAddress?: Address) => {
                 }
               }
             `,
-              variables: { address: strategyAddress },
-            }),
+            variables: { address: strategyAddress },
           }),
-          readContract(config, {
-            address: strategyAddress!,
-            abi: CAPY_STRATEGY_ABI,
-            functionName: "getPoolAmount",
-          }),
-          readContract(config, {
-            address: strategyAddress!,
-            abi: CAPY_STRATEGY_ABI,
-            functionName: "getPoolId",
-          }),
-        ]);
+        }),
+        readContract(config, {
+          address: strategyAddress!,
+          abi: CAPY_STRATEGY_ABI,
+          functionName: "getPoolAmount",
+        }),
+        readContract(config, {
+          address: strategyAddress!,
+          abi: CAPY_STRATEGY_ABI,
+          functionName: "getPoolId",
+        }),
+        readContract(config, {
+          address: strategyAddress!,
+          abi: CAPY_STRATEGY_ABI,
+          functionName: "registrationStartTime",
+        }),
+        readContract(config, {
+          address: strategyAddress!,
+          abi: CAPY_STRATEGY_ABI,
+          functionName: "registrationEndTime",
+        }),
+        readContract(config, {
+          address: strategyAddress!,
+          abi: CAPY_STRATEGY_ABI,
+          functionName: "allocationStartTime",
+        }),
+        readContract(config, {
+          address: strategyAddress!,
+          abi: CAPY_STRATEGY_ABI,
+          functionName: "allocationEndTime",
+        }),
+      ]);
 
       const strategyData = await strategyResponse.json();
       const strategy = strategyData.data.strategyCreateds[0];
@@ -94,6 +125,10 @@ const useFundData = (strategyAddress?: Address) => {
         ...strategy,
         poolSize: formatEther(poolSizeResponse),
         poolId: poolIdResponse,
+        registrationStartTime: registrationStartTimeResponse,
+        registrationEndTime: registrationEndTimeResponse,
+        allocationStartTime: allocationStartTimeResponse,
+        allocationEndTime: allocationEndTimeResponse,
       };
     },
     enabled: !!strategyAddress,
@@ -188,6 +223,10 @@ const useFundData = (strategyAddress?: Address) => {
                   recipientAddress
                   status
                 }
+                allocationUpdateds(orderBy: blockTimestamp, orderDirection: desc, where: { strategyAddress: $trust }) {
+                  recipientAddress
+                  newAllocation
+                }
               }
             `,
             variables: { trust: strategyAddress },
@@ -201,6 +240,11 @@ const useFundData = (strategyAddress?: Address) => {
         const statusUpdate = data.data.recipientStatusUpdateds.find(
           (status: any) =>
             status.recipientAddress === recipient.recipientAddress
+        );
+
+        const allocationUpdate = data.data.allocationUpdateds.find(
+          (allocation: any) =>
+            allocation.recipientAddress === recipient.recipientAddress
         );
 
         const statusMap = {
@@ -221,6 +265,9 @@ const useFundData = (strategyAddress?: Address) => {
           status:
             statusMap[statusUpdate?.status as keyof typeof statusMap] ||
             "Pending",
+          allocation: allocationUpdate
+            ? BigInt(allocationUpdate.newAllocation)
+            : BigInt(0),
         };
       });
     },
