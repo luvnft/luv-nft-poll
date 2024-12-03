@@ -1,22 +1,22 @@
 const data = {
   name: "CapyTrustStrategyFactory",
-  address: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+  address: "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
   abi: [
     {
       type: "constructor",
       inputs: [
-        {
-          name: "_currentStrategy",
-          type: "address",
-          internalType: "address",
-        },
+        { name: "_currentStrategy", type: "address", internalType: "address" },
       ],
       stateMutability: "nonpayable",
     },
     {
       type: "function",
       name: "createStrategy",
-      inputs: [],
+      inputs: [
+        { name: "name", type: "string", internalType: "string" },
+        { name: "avatar", type: "string", internalType: "string" },
+        { name: "description", type: "string", internalType: "string" },
+      ],
       outputs: [{ name: "strategy", type: "address", internalType: "address" }],
       stateMutability: "nonpayable",
     },
@@ -45,11 +45,7 @@ const data = {
       type: "function",
       name: "isStrategyFromFactory",
       inputs: [
-        {
-          name: "_strategyAddress",
-          type: "address",
-          internalType: "address",
-        },
+        { name: "_strategyAddress", type: "address", internalType: "address" },
       ],
       outputs: [{ name: "", type: "bool", internalType: "bool" }],
       stateMutability: "view",
@@ -76,7 +72,7 @@ const data = {
         {
           name: "",
           type: "address",
-          internalType: "contract ICapyTrustStrategy",
+          internalType: "contract CapyTrustStrategy",
         },
       ],
       stateMutability: "view",
@@ -92,11 +88,7 @@ const data = {
       type: "function",
       name: "updateStrategyAddress",
       inputs: [
-        {
-          name: "_currentStrategy",
-          type: "address",
-          internalType: "address",
-        },
+        { name: "_currentStrategy", type: "address", internalType: "address" },
       ],
       outputs: [],
       stateMutability: "nonpayable",
@@ -125,10 +117,34 @@ const data = {
       name: "StrategyCreated",
       inputs: [
         {
+          name: "owner",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        {
           name: "strategyAddress",
           type: "address",
           indexed: true,
           internalType: "address",
+        },
+        {
+          name: "name",
+          type: "string",
+          indexed: false,
+          internalType: "string",
+        },
+        {
+          name: "avatar",
+          type: "string",
+          indexed: false,
+          internalType: "string",
+        },
+        {
+          name: "description",
+          type: "string",
+          indexed: false,
+          internalType: "string",
         },
       ],
       anonymous: false,

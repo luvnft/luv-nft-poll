@@ -24,7 +24,7 @@ export default persist(
       name: "",
       id: null,
     },
-    token: "0x9A676e781A523b5d0C0e43731313A708CB607508",
+    token: "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
 
     setCurrentProfile: (profile: { name: string; id: Address }) =>
       set((state) => {

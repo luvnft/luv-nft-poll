@@ -3,1000 +3,668 @@ const data = {
   address: "",
   abi: [
     {
+      type: "constructor",
       inputs: [
-        {
-          internalType: "address",
-          name: "_allo",
-          type: "address",
-        },
-        {
-          internalType: "address",
-          name: "_sndrCore",
-          type: "address",
-        },
-        {
-          internalType: "address",
-          name: "_token",
-          type: "address",
-        },
+        { name: "_allo", type: "address", internalType: "address" },
+        { name: "_capyCore", type: "address", internalType: "address" },
+        { name: "_token", type: "address", internalType: "address" },
       ],
       stateMutability: "nonpayable",
-      type: "constructor",
     },
     {
-      inputs: [],
-      name: "ALLOCATION_ACTIVE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "ALLOCATION_NOT_ACTIVE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "ALLOCATION_NOT_ENDED",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "ALREADY_INITIALIZED",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "AMOUNT_MISMATCH",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "ANCHOR_ERROR",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "ARRAY_MISMATCH",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "INVALID",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "INVALID_ADDRESS",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "INVALID_FEE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "INVALID_METADATA",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "INVALID_REGISTRATION",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "IS_APPROVED_STRATEGY",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "MISMATCH",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "NONCE_NOT_AVAILABLE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "NON_ZERO_VALUE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "NOT_APPROVED_STRATEGY",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "NOT_ENOUGH_FUNDS",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "NOT_IMPLEMENTED",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "NOT_INITIALIZED",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "NOT_PENDING_OWNER",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "POOL_ACTIVE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "POOL_INACTIVE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "RECIPIENT_ALREADY_ACCEPTED",
-      type: "error",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "recipientId",
-          type: "address",
-        },
-      ],
-      name: "RECIPIENT_ERROR",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "RECIPIENT_NOT_ACCEPTED",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "REGISTRATION_ACTIVE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "REGISTRATION_NOT_ACTIVE",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "UNAUTHORIZED",
-      type: "error",
-    },
-    {
-      inputs: [],
-      name: "ZERO_ADDRESS",
-      type: "error",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "recipientId",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "amount",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "address",
-          name: "token",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "address",
-          name: "sender",
-          type: "address",
-        },
-      ],
-      name: "Allocated",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "recipientAddress",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "newAllocation",
-          type: "uint256",
-        },
-      ],
-      name: "AllocationUpdated",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "allocationsCount",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "totalAllocated",
-          type: "uint256",
-        },
-      ],
-      name: "BatchAllocationCompleted",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "recipientId",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "address",
-          name: "recipientAddress",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "amount",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "address",
-          name: "sender",
-          type: "address",
-        },
-      ],
-      name: "Distributed",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "address[]",
-          name: "recipientIds",
-          type: "address[]",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "totalAllocation",
-          type: "uint256",
-        },
-      ],
-      name: "DistributionExecuted",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "poolId",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "bytes",
-          name: "data",
-          type: "bytes",
-        },
-      ],
-      name: "Initialized",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "previousOwner",
-          type: "address",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "newOwner",
-          type: "address",
-        },
-      ],
-      name: "OwnershipTransferred",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "bool",
-          name: "active",
-          type: "bool",
-        },
-      ],
-      name: "PoolActive",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "recipientAddress",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "initialAllocation",
-          type: "uint256",
-        },
-      ],
-      name: "RecipientRegistered",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "recipientAddress",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "enum IStrategy.Status",
-          name: "status",
-          type: "uint8",
-        },
-      ],
-      name: "RecipientStatusUpdated",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "recipientId",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "bytes",
-          name: "data",
-          type: "bytes",
-        },
-        {
-          indexed: false,
-          internalType: "address",
-          name: "sender",
-          type: "address",
-        },
-      ],
-      name: "Registered",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "uint64",
-          name: "registrationStartTime",
-          type: "uint64",
-        },
-        {
-          indexed: false,
-          internalType: "uint64",
-          name: "registrationEndTime",
-          type: "uint64",
-        },
-        {
-          indexed: false,
-          internalType: "uint64",
-          name: "allocationStartTime",
-          type: "uint64",
-        },
-        {
-          indexed: false,
-          internalType: "uint64",
-          name: "allocationEndTime",
-          type: "uint64",
-        },
-      ],
-      name: "TimestampsUpdated",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "address[]",
-          name: "newWhitelistedCollectors",
-          type: "address[]",
-        },
-      ],
-      name: "WhitelistedCollectorsUpdated",
-      type: "event",
-    },
-    {
-      inputs: [],
-      name: "NATIVE",
-      outputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
       type: "function",
+      name: "NATIVE",
+      inputs: [],
+      outputs: [{ name: "", type: "address", internalType: "address" }],
+      stateMutability: "view",
     },
     {
-      inputs: [
-        {
-          internalType: "bytes",
-          name: "_data",
-          type: "bytes",
-        },
-        {
-          internalType: "address",
-          name: "_sender",
-          type: "address",
-        },
-      ],
+      type: "function",
       name: "allocate",
+      inputs: [
+        { name: "_data", type: "bytes", internalType: "bytes" },
+        { name: "_sender", type: "address", internalType: "address" },
+      ],
       outputs: [],
       stateMutability: "payable",
-      type: "function",
     },
     {
-      inputs: [],
+      type: "function",
       name: "allocationEndTime",
-      outputs: [
-        {
-          internalType: "uint64",
-          name: "",
-          type: "uint64",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
       inputs: [],
-      name: "allocationStartTime",
-      outputs: [
-        {
-          internalType: "uint64",
-          name: "",
-          type: "uint64",
-        },
-      ],
+      outputs: [{ name: "", type: "uint64", internalType: "uint64" }],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "address[]",
-          name: "_recipientIds",
-          type: "address[]",
-        },
-        {
-          internalType: "bytes",
-          name: "_data",
-          type: "bytes",
-        },
-        {
-          internalType: "address",
-          name: "_sender",
-          type: "address",
-        },
-      ],
+      type: "function",
+      name: "allocationStartTime",
+      inputs: [],
+      outputs: [{ name: "", type: "uint64", internalType: "uint64" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
       name: "distribute",
+      inputs: [
+        { name: "_recipientIds", type: "address[]", internalType: "address[]" },
+        { name: "_data", type: "bytes", internalType: "bytes" },
+        { name: "_sender", type: "address", internalType: "address" },
+      ],
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
+      type: "function",
+      name: "factoryInitialize",
       inputs: [],
+      outputs: [],
+      stateMutability: "nonpayable",
+    },
+    {
+      type: "function",
       name: "getAllo",
+      inputs: [],
+      outputs: [{ name: "", type: "address", internalType: "contract IAllo" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
+      name: "getCapyCore",
+      inputs: [],
       outputs: [
-        {
-          internalType: "contract IAllo",
-          name: "",
-          type: "address",
-        },
+        { name: "", type: "address", internalType: "contract ICapyCore" },
       ],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "address[]",
-          name: "_recipientIds",
-          type: "address[]",
-        },
-        {
-          internalType: "bytes[]",
-          name: "_data",
-          type: "bytes[]",
-        },
-      ],
+      type: "function",
       name: "getPayouts",
+      inputs: [
+        { name: "_recipientIds", type: "address[]", internalType: "address[]" },
+        { name: "_data", type: "bytes[]", internalType: "bytes[]" },
+      ],
       outputs: [
         {
-          components: [
-            {
-              internalType: "address",
-              name: "recipientAddress",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "amount",
-              type: "uint256",
-            },
-          ],
-          internalType: "struct IStrategy.PayoutSummary[]",
           name: "",
           type: "tuple[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "getPoolAmount",
-      outputs: [
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "getPoolId",
-      outputs: [
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "_recipientAddress",
-          type: "address",
-        },
-      ],
-      name: "getRecipientDetails",
-      outputs: [
-        {
+          internalType: "struct IStrategy.PayoutSummary[]",
           components: [
             {
-              internalType: "address",
               name: "recipientAddress",
               type: "address",
+              internalType: "address",
             },
-            {
-              internalType: "uint256",
-              name: "totalAllocation",
-              type: "uint256",
-            },
-            {
-              internalType: "enum IStrategy.Status",
-              name: "status",
-              type: "uint8",
-            },
+            { name: "amount", type: "uint256", internalType: "uint256" },
           ],
-          internalType: "struct SNDRStrategy.Recipient",
+        },
+      ],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
+      name: "getPoolAmount",
+      inputs: [],
+      outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
+      name: "getPoolId",
+      inputs: [],
+      outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
+      name: "getRecipientDetails",
+      inputs: [
+        { name: "_recipientAddress", type: "address", internalType: "address" },
+      ],
+      outputs: [
+        {
           name: "",
           type: "tuple",
+          internalType: "struct CapyTrustStrategy.Recipient",
+          components: [
+            {
+              name: "recipientAddress",
+              type: "address",
+              internalType: "address",
+            },
+            { name: "allocation", type: "uint256", internalType: "uint256" },
+            {
+              name: "status",
+              type: "uint8",
+              internalType: "enum IStrategy.Status",
+            },
+          ],
         },
       ],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "address",
-          name: "_recipientId",
-          type: "address",
-        },
-      ],
+      type: "function",
       name: "getRecipientStatus",
+      inputs: [
+        { name: "_recipientId", type: "address", internalType: "address" },
+      ],
       outputs: [
-        {
-          internalType: "enum IStrategy.Status",
-          name: "",
-          type: "uint8",
-        },
+        { name: "", type: "uint8", internalType: "enum IStrategy.Status" },
       ],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [],
+      type: "function",
       name: "getStrategyId",
-      outputs: [
-        {
-          internalType: "bytes32",
-          name: "",
-          type: "bytes32",
-        },
-      ],
+      inputs: [],
+      outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
       stateMutability: "view",
-      type: "function",
     },
     {
+      type: "function",
+      name: "getToken",
       inputs: [],
+      outputs: [{ name: "", type: "address", internalType: "contract IERC20" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
       name: "getTotalRecipients",
-      outputs: [
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
+      inputs: [],
+      outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "_amount",
-          type: "uint256",
-        },
-      ],
+      type: "function",
       name: "increasePoolAmount",
+      inputs: [{ name: "_amount", type: "uint256", internalType: "uint256" }],
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "_poolId",
-          type: "uint256",
-        },
-        {
-          internalType: "bytes",
-          name: "_data",
-          type: "bytes",
-        },
-      ],
+      type: "function",
       name: "initialize",
+      inputs: [
+        { name: "_poolId", type: "uint256", internalType: "uint256" },
+        { name: "_data", type: "bytes", internalType: "bytes" },
+      ],
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
-      inputs: [],
+      type: "function",
       name: "isPoolActive",
-      outputs: [
-        {
-          internalType: "bool",
-          name: "",
-          type: "bool",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "_allocator",
-          type: "address",
-        },
-      ],
-      name: "isValidAllocator",
-      outputs: [
-        {
-          internalType: "bool",
-          name: "",
-          type: "bool",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
       inputs: [],
+      outputs: [{ name: "", type: "bool", internalType: "bool" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
+      name: "isValidAllocator",
+      inputs: [
+        { name: "_allocator", type: "address", internalType: "address" },
+      ],
+      outputs: [{ name: "", type: "bool", internalType: "bool" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
       name: "owner",
-      outputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address",
-        },
-      ],
+      inputs: [],
+      outputs: [{ name: "", type: "address", internalType: "address" }],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
+      type: "function",
       name: "recipientList",
-      outputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address",
-        },
-      ],
+      inputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+      outputs: [{ name: "", type: "address", internalType: "address" }],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address",
-        },
-      ],
+      type: "function",
       name: "recipients",
+      inputs: [{ name: "", type: "address", internalType: "address" }],
       outputs: [
+        { name: "recipientAddress", type: "address", internalType: "address" },
+        { name: "allocation", type: "uint256", internalType: "uint256" },
         {
-          internalType: "address",
-          name: "recipientAddress",
-          type: "address",
-        },
-        {
-          internalType: "uint256",
-          name: "totalAllocation",
-          type: "uint256",
-        },
-        {
-          internalType: "enum IStrategy.Status",
           name: "status",
           type: "uint8",
+          internalType: "enum IStrategy.Status",
         },
       ],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [
-        {
-          internalType: "bytes",
-          name: "_data",
-          type: "bytes",
-        },
-        {
-          internalType: "address",
-          name: "_sender",
-          type: "address",
-        },
-      ],
+      type: "function",
       name: "registerRecipient",
+      inputs: [
+        { name: "_data", type: "bytes", internalType: "bytes" },
+        { name: "_sender", type: "address", internalType: "address" },
+      ],
       outputs: [
-        {
-          internalType: "address",
-          name: "recipientId",
-          type: "address",
-        },
+        { name: "recipientId", type: "address", internalType: "address" },
       ],
       stateMutability: "payable",
-      type: "function",
     },
     {
-      inputs: [],
+      type: "function",
       name: "registrationEndTime",
-      outputs: [
-        {
-          internalType: "uint64",
-          name: "",
-          type: "uint64",
-        },
-      ],
+      inputs: [],
+      outputs: [{ name: "", type: "uint64", internalType: "uint64" }],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [],
+      type: "function",
       name: "registrationStartTime",
-      outputs: [
-        {
-          internalType: "uint64",
-          name: "",
-          type: "uint64",
-        },
-      ],
+      inputs: [],
+      outputs: [{ name: "", type: "uint64", internalType: "uint64" }],
       stateMutability: "view",
-      type: "function",
     },
     {
-      inputs: [],
+      type: "function",
       name: "renounceOwnership",
+      inputs: [],
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
-      inputs: [],
-      name: "sndrCore",
-      outputs: [
-        {
-          internalType: "contract ISNDRCore",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
       type: "function",
-    },
-    {
-      inputs: [],
-      name: "token",
-      outputs: [
-        {
-          internalType: "contract IERC20",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "newOwner",
-          type: "address",
-        },
-      ],
       name: "transferOwnership",
+      inputs: [{ name: "newOwner", type: "address", internalType: "address" }],
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
+      type: "function",
+      name: "updatePoolTimestamps",
       inputs: [
         {
-          internalType: "uint64",
           name: "_registrationStartTime",
           type: "uint64",
+          internalType: "uint64",
         },
         {
-          internalType: "uint64",
           name: "_registrationEndTime",
           type: "uint64",
+          internalType: "uint64",
         },
         {
-          internalType: "uint64",
           name: "_allocationStartTime",
           type: "uint64",
-        },
-        {
           internalType: "uint64",
-          name: "_allocationEndTime",
-          type: "uint64",
         },
+        { name: "_allocationEndTime", type: "uint64", internalType: "uint64" },
       ],
-      name: "updatePoolTimestamps",
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
+      type: "function",
+      name: "updateRecipientStatus",
       inputs: [
+        { name: "_recipientAddress", type: "address", internalType: "address" },
         {
-          internalType: "address",
-          name: "_recipientAddress",
-          type: "address",
-        },
-        {
-          internalType: "enum IStrategy.Status",
           name: "_newStatus",
           type: "uint8",
+          internalType: "enum IStrategy.Status",
         },
       ],
-      name: "updateRecipientStatus",
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
+      type: "function",
+      name: "updateWhitelistedCollectors",
       inputs: [
         {
-          internalType: "address[]",
           name: "_newWhitelistedCollectors",
           type: "address[]",
+          internalType: "address[]",
         },
       ],
-      name: "updateWhitelistedCollectors",
       outputs: [],
       stateMutability: "nonpayable",
-      type: "function",
     },
     {
+      type: "function",
+      name: "whitelistedCollectors",
+      inputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+      outputs: [{ name: "", type: "address", internalType: "address" }],
+      stateMutability: "view",
+    },
+    {
+      type: "function",
+      name: "withdrawRemainingTokens",
+      inputs: [],
+      outputs: [],
+      stateMutability: "nonpayable",
+    },
+    {
+      type: "event",
+      name: "Allocated",
       inputs: [
         {
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
-      name: "whitelistedCollectors",
-      outputs: [
-        {
-          internalType: "address",
-          name: "",
+          name: "recipientId",
           type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        {
+          name: "amount",
+          type: "uint256",
+          indexed: false,
+          internalType: "uint256",
+        },
+        {
+          name: "token",
+          type: "address",
+          indexed: false,
+          internalType: "address",
+        },
+        {
+          name: "sender",
+          type: "address",
+          indexed: false,
+          internalType: "address",
         },
       ],
-      stateMutability: "view",
-      type: "function",
+      anonymous: false,
     },
     {
-      inputs: [],
-      name: "withdrawRemainingTokens",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
+      type: "event",
+      name: "AllocationUpdated",
+      inputs: [
+        {
+          name: "recipientAddress",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        {
+          name: "newAllocation",
+          type: "uint256",
+          indexed: false,
+          internalType: "uint256",
+        },
+      ],
+      anonymous: false,
     },
+    {
+      type: "event",
+      name: "BatchAllocationCompleted",
+      inputs: [
+        {
+          name: "allocationsCount",
+          type: "uint256",
+          indexed: false,
+          internalType: "uint256",
+        },
+        {
+          name: "totalAllocated",
+          type: "uint256",
+          indexed: false,
+          internalType: "uint256",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "Distributed",
+      inputs: [
+        {
+          name: "recipientId",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        {
+          name: "recipientAddress",
+          type: "address",
+          indexed: false,
+          internalType: "address",
+        },
+        {
+          name: "amount",
+          type: "uint256",
+          indexed: false,
+          internalType: "uint256",
+        },
+        {
+          name: "sender",
+          type: "address",
+          indexed: false,
+          internalType: "address",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "DistributionExecuted",
+      inputs: [
+        {
+          name: "recipientIds",
+          type: "address[]",
+          indexed: false,
+          internalType: "address[]",
+        },
+        {
+          name: "allocations",
+          type: "uint256[]",
+          indexed: false,
+          internalType: "uint256[]",
+        },
+        {
+          name: "duration",
+          type: "uint32",
+          indexed: false,
+          internalType: "uint32",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "Initialized",
+      inputs: [
+        {
+          name: "version",
+          type: "uint8",
+          indexed: false,
+          internalType: "uint8",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "Initialized",
+      inputs: [
+        {
+          name: "poolId",
+          type: "uint256",
+          indexed: false,
+          internalType: "uint256",
+        },
+        { name: "data", type: "bytes", indexed: false, internalType: "bytes" },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "OwnershipTransferred",
+      inputs: [
+        {
+          name: "previousOwner",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        {
+          name: "newOwner",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "PoolActive",
+      inputs: [
+        { name: "active", type: "bool", indexed: false, internalType: "bool" },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "RecipientRegistered",
+      inputs: [
+        {
+          name: "recipientAddress",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        {
+          name: "name",
+          type: "string",
+          indexed: false,
+          internalType: "string",
+        },
+        {
+          name: "avatar",
+          type: "string",
+          indexed: false,
+          internalType: "string",
+        },
+        { name: "bio", type: "string", indexed: false, internalType: "string" },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "RecipientStatusUpdated",
+      inputs: [
+        {
+          name: "recipientAddress",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        {
+          name: "status",
+          type: "uint8",
+          indexed: false,
+          internalType: "enum IStrategy.Status",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "Registered",
+      inputs: [
+        {
+          name: "recipientId",
+          type: "address",
+          indexed: true,
+          internalType: "address",
+        },
+        { name: "data", type: "bytes", indexed: false, internalType: "bytes" },
+        {
+          name: "sender",
+          type: "address",
+          indexed: false,
+          internalType: "address",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "TimestampsUpdated",
+      inputs: [
+        {
+          name: "registrationStartTime",
+          type: "uint64",
+          indexed: false,
+          internalType: "uint64",
+        },
+        {
+          name: "registrationEndTime",
+          type: "uint64",
+          indexed: false,
+          internalType: "uint64",
+        },
+        {
+          name: "allocationStartTime",
+          type: "uint64",
+          indexed: false,
+          internalType: "uint64",
+        },
+        {
+          name: "allocationEndTime",
+          type: "uint64",
+          indexed: false,
+          internalType: "uint64",
+        },
+      ],
+      anonymous: false,
+    },
+    {
+      type: "event",
+      name: "WhitelistedCollectorsUpdated",
+      inputs: [
+        {
+          name: "newWhitelistedCollectors",
+          type: "address[]",
+          indexed: false,
+          internalType: "address[]",
+        },
+      ],
+      anonymous: false,
+    },
+    { type: "error", name: "ALLOCATION_ACTIVE", inputs: [] },
+    { type: "error", name: "ALLOCATION_NOT_ACTIVE", inputs: [] },
+    { type: "error", name: "ALLOCATION_NOT_ENDED", inputs: [] },
+    { type: "error", name: "ALREADY_INITIALIZED", inputs: [] },
+    { type: "error", name: "AMOUNT_MISMATCH", inputs: [] },
+    { type: "error", name: "ANCHOR_ERROR", inputs: [] },
+    { type: "error", name: "ARRAY_MISMATCH", inputs: [] },
+    { type: "error", name: "INVALID", inputs: [] },
+    { type: "error", name: "INVALID_ADDRESS", inputs: [] },
+    { type: "error", name: "INVALID_FEE", inputs: [] },
+    { type: "error", name: "INVALID_METADATA", inputs: [] },
+    { type: "error", name: "INVALID_REGISTRATION", inputs: [] },
+    { type: "error", name: "IS_APPROVED_STRATEGY", inputs: [] },
+    { type: "error", name: "MISMATCH", inputs: [] },
+    { type: "error", name: "NONCE_NOT_AVAILABLE", inputs: [] },
+    { type: "error", name: "NON_ZERO_VALUE", inputs: [] },
+    { type: "error", name: "NOT_APPROVED_STRATEGY", inputs: [] },
+    { type: "error", name: "NOT_ENOUGH_FUNDS", inputs: [] },
+    { type: "error", name: "NOT_IMPLEMENTED", inputs: [] },
+    { type: "error", name: "NOT_INITIALIZED", inputs: [] },
+    { type: "error", name: "NOT_PENDING_OWNER", inputs: [] },
+    { type: "error", name: "POOL_ACTIVE", inputs: [] },
+    { type: "error", name: "POOL_INACTIVE", inputs: [] },
+    { type: "error", name: "RECIPIENT_ALREADY_ACCEPTED", inputs: [] },
+    {
+      type: "error",
+      name: "RECIPIENT_ERROR",
+      inputs: [
+        { name: "recipientId", type: "address", internalType: "address" },
+      ],
+    },
+    { type: "error", name: "RECIPIENT_NOT_ACCEPTED", inputs: [] },
+    { type: "error", name: "REGISTRATION_ACTIVE", inputs: [] },
+    { type: "error", name: "REGISTRATION_NOT_ACTIVE", inputs: [] },
+    { type: "error", name: "UNAUTHORIZED", inputs: [] },
+    { type: "error", name: "ZERO_ADDRESS", inputs: [] },
   ],
 } as const;
 
