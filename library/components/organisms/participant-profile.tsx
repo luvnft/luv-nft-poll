@@ -1,18 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
 import { Address } from "viem";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
-import { Button } from "@/components/atoms/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/atoms/card";
-import { ellipsisAddress, getInitials } from "@/utils";
+import { Input } from "@/components/atoms/input";
 import {
   Select,
   SelectContent,
@@ -20,8 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/atoms/select";
-import { isValidUrl } from "@/utils";
-import useCapyProtocol from "@/hooks/use-capy-protocol";
+import { ellipsisAddress, getInitials, isValidUrl } from "@/utils";
 
 interface Participant {
   address: Address;
@@ -37,57 +33,112 @@ interface Participant {
     | "Appealed"
     | "InReview"
     | "Canceled";
+  allocation: bigint;
 }
+
+type Step = "allocation" | "registration" | "distribution";
 
 interface ParticipantProfileProps {
   data: Participant;
   isAdmin?: boolean;
+  step?: Step;
+  onStatusChange?: (address: Address, status: Participant["status"]) => void;
+  onAllocationChange?: (address: Address, allocation: string) => void;
+  status?: Participant["status"];
+  allocation?: string;
 }
 
 const ParticipantProfile = ({
   data,
   isAdmin = false,
+  step,
+  onStatusChange,
+  onAllocationChange,
+  status: controlledStatus,
+  allocation: controlledAllocation,
 }: ParticipantProfileProps) => {
-  const [status, setStatus] = useState(data.status);
-  const [isSaving, setIsSaving] = useState(false);
-  const [showSave, setShowSave] = useState(false);
-  const { updateRecipientStatus } = useCapyProtocol();
+  const status = controlledStatus ?? data.status;
+  const allocation =
+    controlledAllocation ??
+    (data.allocation ? data.allocation.toString() : "0");
 
-  const handleStatusChange = (newStatus: Participant["status"]) => {
-    setStatus(newStatus);
-    setShowSave(true);
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const statusMap = {
-        None: 0,
-        Pending: 1,
-        Accepted: 2,
-        Rejected: 3,
-        Appealed: 4,
-        InReview: 5,
-        Canceled: 6,
-      };
-
-      await updateRecipientStatus({
-        status: statusMap[status],
-        strategyAddress: data.strategyAddress,
-        recipientId: data.address,
-      });
-
-      toast.success("Status updated successfully");
-      setShowSave(false);
-    } catch (error) {
-      console.error("Failed to update status:", error);
-      toast.error(
-        `Application failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
+  const renderStepContent = () => {
+    if (!isAdmin && !step) {
+      return (
+        <span className="px-2 py-1 text-sm rounded bg-gray-100">{status}</span>
       );
-    } finally {
-      setIsSaving(false);
+    }
+
+    switch (step) {
+      case "registration":
+        return isAdmin ? (
+          <Select
+            value={status}
+            onValueChange={(newStatus) =>
+              onStatusChange?.(data.address, newStatus as Participant["status"])
+            }
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="None" disabled>
+                None
+              </SelectItem>
+              <SelectItem value="Pending" disabled>
+                Pending
+              </SelectItem>
+              <SelectItem value="Accepted">Accepted</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
+              <SelectItem value="Appealed" disabled>
+                Appealed
+              </SelectItem>
+              <SelectItem value="InReview" disabled>
+                In Review
+              </SelectItem>
+              <SelectItem value="Canceled" disabled>
+                Canceled
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <span className="px-2 py-1 text-sm rounded bg-gray-100">
+            {status}
+          </span>
+        );
+
+      case "allocation":
+        return isAdmin ? (
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={allocation}
+              onChange={(e) =>
+                onAllocationChange?.(data.address, e.target.value)
+              }
+              className="w-[140px]"
+              placeholder="Allocation"
+            />
+          </div>
+        ) : (
+          <span className="px-2 py-1 text-sm rounded bg-gray-100">
+            {allocation}
+          </span>
+        );
+
+      case "distribution":
+        return (
+          <span className="px-2 py-1 text-sm rounded bg-gray-100">
+            {data.allocation?.toString() || "0"}
+          </span>
+        );
+
+      default:
+        return (
+          <span className="px-2 py-1 text-sm rounded bg-gray-100">
+            {status}
+          </span>
+        );
     }
   };
 
@@ -114,44 +165,7 @@ const ParticipantProfile = ({
         </p>
         <p className="text-sm text-muted-foreground">{data.bio}</p>
         <div className="flex items-center gap-2 mt-2">
-          {isAdmin ? (
-            <>
-              <Select value={status} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="None" disabled>
-                    None
-                  </SelectItem>
-                  <SelectItem value="Pending" disabled>
-                    Pending
-                  </SelectItem>
-                  <SelectItem value="Accepted">Accepted</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
-                  <SelectItem value="Appealed" disabled>
-                    Appealed
-                  </SelectItem>
-                  <SelectItem value="InReview" disabled>
-                    In Review
-                  </SelectItem>
-                  <SelectItem value="Canceled" disabled>
-                    Canceled
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              {showSave && (
-                <Button onClick={handleSave} disabled={isSaving} size="sm">
-                  {isSaving ? "Saving..." : "Save"}
-                </Button>
-              )}
-            </>
-          ) : (
-            <span className="px-2 py-1 text-sm rounded bg-gray-100">
-              {status}
-            </span>
-          )}
+          {renderStepContent()}
         </div>
       </CardContent>
     </Card>
