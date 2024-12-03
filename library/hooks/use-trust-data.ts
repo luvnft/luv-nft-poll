@@ -53,7 +53,7 @@ const useTrustData = (userAddress?: Address) => {
   });
 
   const dashboardStatsQuery = useQuery({
-    queryKey: ["dashboardStats"],
+    queryKey: ["dashboardStats", userAddress],
     queryFn: async () => {
       const response = await fetch(
         "http://localhost:8000/subgraphs/name/capy-strategy",
@@ -64,8 +64,8 @@ const useTrustData = (userAddress?: Address) => {
           },
           body: JSON.stringify({
             query: `
-            query GetDashboardStats {
-              distributionExecuteds {
+            query GetDashboardStats($owner: String!) {
+              distributionExecuteds(where: { owner: $owner }) {
                 allocations
                 recipientIds
                 duration
@@ -73,6 +73,7 @@ const useTrustData = (userAddress?: Address) => {
               }
             }
           `,
+            variables: { owner: userAddress },
           }),
         }
       );
@@ -109,6 +110,7 @@ const useTrustData = (userAddress?: Address) => {
         activeBeneficiaries: activeBeneficiariesSet.size,
       } as DashboardStats;
     },
+    enabled: !!userAddress,
   });
 
 
