@@ -1,5 +1,6 @@
 "use client";
 
+import useCapyProtocol from "@/hooks/use-capy-protocol";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,11 +32,9 @@ import {
 } from "@/components/atoms/form";
 import { Input } from "@/components/atoms/input";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Textarea } from "../atoms/text-area";
-import { Label } from "../atoms/label";
-import useCapyProtocol from "@/hooks/use-capy-protocol";
-import { Address } from "viem";
 import { useAccount } from "wagmi";
+import { Label } from "@/components/atoms/label";
+import { Textarea } from "@/components/atoms/text-area";
 
 const FormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -49,8 +48,6 @@ const FormSchema = z.object({
       message: "Bio must not be longer than 160 characters.",
     }),
 });
-
-interface TrustFundApplicationParams {}
 
 const TrustFundApplication = ({ poolId }: { poolId: bigint }) => {
   const { registerRecipient } = useCapyProtocol();
@@ -85,7 +82,7 @@ const TrustFundApplication = ({ poolId }: { poolId: bigint }) => {
           bio: data.bio,
         },
       });
-      
+
       toast.success("Trust fund application successful!");
 
       setOpen(false);

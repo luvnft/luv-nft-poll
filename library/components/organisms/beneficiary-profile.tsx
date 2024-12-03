@@ -27,7 +27,7 @@ import {
 import { Progress } from "@/components/atoms/progress";
 import { Beneficiary } from "@/hooks/use-fund-data";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { isValidUrl } from "@/utils";
+import { ellipsisAddress, isValidUrl } from "@/utils";
 
 const BeneficiaryProfile = ({ data }: { data: Beneficiary }) => {
   const [open, setOpen] = useState(false);
@@ -66,12 +66,12 @@ const BeneficiaryProfile = ({ data }: { data: Beneficiary }) => {
             <div className=" flex gap-2 items-center">
               <DollarSign />
               <p className=" text-4xl font-medium">
-                {data.streamProgress.remaining}
+                {data.allocation - data.streamProgress.remaining}
               </p>
               <p className=" text-green-400 text-2xl">USDe</p>
             </div>
             {/* TODO: convert sUSDe to usd */}
-            <p className=" text-xs">$2222 USD</p>
+            <p className=" text-xs">$ ${data.allocation} USD</p>
           </div>
         </div>
 
@@ -84,9 +84,9 @@ const BeneficiaryProfile = ({ data }: { data: Beneficiary }) => {
 
         <div className=" p-4 bg-gray-200"></div>
 
-        <div className=" rounded-md p-2 flex gap-4 border border-gray-200">
+        <div className=" rounded-md p-2 flex gap-4 border border-gray-200 items-center">
           <div className=" h-5 w-5 bg-black rounded-full"></div>
-          <p className="text-sm"> {data.address}</p>
+          <p className="text-sm"> {ellipsisAddress(data.address, 10)}</p>
           <button onClick={() => navigator.clipboard.writeText(data.address)}>
             <Copy width={16} />
           </button>
