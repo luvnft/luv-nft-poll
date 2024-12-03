@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Loader } from "lucide-react";
 import { useParams } from "next/navigation";
-import { Address } from "viem";
+import { Address, encodeAbiParameters, parseAbiParameters } from "viem";
 import { formatDistanceToNow, format } from "date-fns";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -52,7 +52,7 @@ const Fund = () => {
   const isMounted = useMounted();
   const stepper = useStepper();
   const isAdmin = true;
-  const { updateRecipientStatus } = useCapyProtocol();
+  const { updateRecipientStatus, allocate, distribute } = useCapyProtocol();
 
   const { beneficiaries, strategy, participants, isLoading, error } =
     useFundData(fund);
@@ -67,7 +67,6 @@ const Fund = () => {
 
   const [isSaving, setIsSaving] = React.useState(false);
   const [isDistributing, setIsDistributing] = React.useState(false);
-
 
   const currentTime = BigInt(Math.floor(Date.now() / 1000));
   const isRegistrationOpen =
@@ -99,7 +98,6 @@ const Fund = () => {
         return participants;
     }
   };
-
 
   // Check if there are any unsaved changes
   const hasChanges = Object.keys(participantChanges).length > 0;
@@ -137,21 +135,42 @@ const Fund = () => {
         Canceled: 6,
       };
 
-      // Process changes based on current step
       if (stepper.current.id === "registration") {
-        // Save status changes
-        for (const [address, changes] of Object.entries(participantChanges)) {
-          if (changes.status) {
-            await updateRecipientStatus({
-              status: statusMap[changes.status],
-              strategyAddress: strategy?.strategyAddress!,
-              recipientId: address as Address,
-            });
-          }
+        const statusChanges = Object.entries(participantChanges)
+          .filter(([_, changes]) => changes.status)
+          .map(([address, changes]) => ({
+            status: statusMap[changes.status!], // Add ! since we filtered for status existing
+            strategyAddress: strategy?.strategyAddress!,
+            recipientId: address as Address,
+          }));
+
+        // Process status changes sequentially
+        for (const change of statusChanges) {
+          await updateRecipientStatus(change);
         }
       } else if (stepper.current.id === "allocation") {
-        // Save allocation changes
-        // TODO: Implement allocation saving logic
+        // Get addresses and allocations from participant changes
+        const allocationChanges = Object.entries(participantChanges)
+          .filter(
+            ([_, changes]) => changes.allocation && changes.allocation !== "0"
+          )
+          .reduce(
+            (acc, [address, changes]) => {
+              acc.addresses.push(address as Address);
+              acc.amounts.push(BigInt(changes.allocation!));
+              return acc;
+            },
+            { addresses: [] as Address[], amounts: [] as bigint[] }
+          );
+
+        // Encode parameters for allocation
+        const data = encodeAbiParameters(
+          parseAbiParameters("address[], uint256[]"),
+          [allocationChanges.addresses, allocationChanges.amounts]
+        );
+
+        strategy?.poolId &&
+          (await allocate({ poolId: strategy?.poolId, data }));
       }
 
       // Clear changes after successful save
@@ -169,13 +188,19 @@ const Fund = () => {
     }
   };
 
-  const d = getFilteredParticipants("distribution").map(
-    (participant) => participant
+  const distributionParticipants = getFilteredParticipants("distribution").map(
+    (participant) => participant.address as Address
   );
-
   const handleDistribution = async () => {
-
-    alert(d.length);
+    const data = encodeAbiParameters(
+      parseAbiParameters("uint32"),
+      [180] // 3 minutes in seconds
+    );
+    await distribute({
+      poolId: strategy?.poolId!,
+      recipientIds: distributionParticipants,
+      data,
+    });
   };
 
   if (!isMounted) return null;
@@ -194,7 +219,6 @@ const Fund = () => {
       </div>
     );
   }
-
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6">
@@ -230,7 +254,7 @@ const Fund = () => {
             </TabsTrigger>
           </TabsList>
           <div className="flex items-center space-x-2">
-            {strategy?.poolId && isRegistrationOpen && (
+            {strategy?.poolId && (
               <NewTrustFundApplication poolId={strategy?.poolId} />
             )}
           </div>
@@ -305,8 +329,15 @@ const Fund = () => {
               </Button>
             )}
             {stepper.current.id === "distribution" && (
-              <Button onClick={handleDistribution} disabled={isDistributing || d.length === 0}>
-                {isDistributing ? "Distributing..." : "Distribute"}
+              <Button
+                onClick={handleDistribution}
+                disabled={
+                  isDistributing || distributionParticipants.length === 0
+                }
+              >
+                {isDistributing
+                  ? "Distributing..."
+                  : "Distribute (streams for 3 minutes)"}
               </Button>
             )}
           </div>
