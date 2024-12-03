@@ -4,8 +4,6 @@ import { MainNav } from "@/components/molecules/nav-main";
 import { UserNav } from "@/components/molecules/nav-user";
 import { cn } from "@/utils";
 
-
-
 const Header = ({ className }: { className?: string }) => {
   return (
     <header className={cn("border-b", className)}>
