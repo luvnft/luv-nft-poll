@@ -17,6 +17,9 @@ import {
   zeroAddress,
 } from "viem";
 import { getBytecode, readContract } from "wagmi/actions";
+import drips from "@/types/contracts/drips";
+
+const DRIPS_ADDRESS = drips.address as `0x${string}`;
 
 const REGISTRY_ADDRESS = registry.address as `0x${string}`;
 const ALLO_ADDRESS = allo.address as `0x${string}`;
@@ -24,6 +27,7 @@ const CAPY_STRATEGY_FACTORY_ADDRESS =
   capyStrategyFactory.address as `0x${string}`;
 const CAPY_CORE_ADDRESS = capyCore.address as `0x${string}`;
 
+const DRIPS_ABI = drips.abi;
 const REGISTRY_ABI = registry.abi;
 const ALLO_ABI = allo.abi;
 const CAPY_STRATEGY_ABI = capyStrategy.abi;
@@ -95,6 +99,13 @@ type FunctionParams = {
     poolId: bigint;
     recipientIds: Address[];
     data: `0x${string}`;
+  };
+  fundsOut: {
+    poolId: bigint;
+    capyNftId: bigint;
+    recipient: Address;
+    maxCycles: number;
+    token: Address;
   };
 };
 
@@ -311,7 +322,78 @@ const useCapyProtocol = () => {
     []
   );
 
-  const fundsOut = useCallback(async () => {}, []);
+  const findOptimalCycles = async (
+    accountId: bigint,
+    erc20TokenAddress: Address,
+    maxCycles: number
+  ) => {
+    let left = 0;
+    let right = maxCycles;
+    let minNonZeroCycle = -1;
+    let maxReceivableCycle = -1;
+    let maxReceivableAmount = BigInt(0);
+
+    // Binary search to find the minimum non-zero cycle
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+      const receivable = await readContract(config, {
+        address: DRIPS_ADDRESS,
+        abi: DRIPS_ABI,
+        functionName: "receiveStreamsResult",
+        args: [accountId, erc20TokenAddress, mid],
+      });
+
+      if (receivable > BigInt(0)) {
+        minNonZeroCycle = mid;
+        right = mid - 1;
+      } else {
+        left = mid + 1;
+      }
+    }
+
+    // If no non-zero cycle found, return null
+    if (minNonZeroCycle === -1) return null;
+
+    // Find the maximum receivable cycle
+    left = minNonZeroCycle;
+    right = maxCycles;
+
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+      const receivable = await readContract(config, {
+        address: DRIPS_ADDRESS,
+        abi: DRIPS_ABI,
+        functionName: "receiveStreamsResult",
+        args: [accountId, erc20TokenAddress, mid],
+      });
+
+      if (receivable > maxReceivableAmount) {
+        maxReceivableCycle = mid;
+        maxReceivableAmount = receivable;
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+
+    return { minNonZeroCycle, maxReceivableCycle, maxReceivableAmount };
+  };
+
+  const fundsOut = useCallback(async (params: FunctionParams["fundsOut"]) => {
+    const { request } = await simulateContract(config, {
+      abi: CAPY_CORE_ABI,
+      address: CAPY_CORE_ADDRESS,
+      functionName: "transfer",
+      args: [
+        params.poolId,
+        params.capyNftId,
+        params.recipient,
+        params.maxCycles,
+        params.token,
+      ],
+    });
+    return writeContract(config, request);
+  }, []);
 
   return {
     createProfile,
@@ -320,6 +402,7 @@ const useCapyProtocol = () => {
     updateRecipientStatus,
     allocate,
     distribute,
+    findOptimalCycles,
     fundsOut,
   };
 };
