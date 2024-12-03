@@ -6,14 +6,17 @@ export type Token = {
   address: Address;
 };
 
-export interface FundingFlowState {
-  address: string;
-  emojiCodePoint: string;
-  token: Token | null;
+export interface GroupedStream {
+  poolId: string;
+  strategyAddress: string;
+  avatar: string;
+  name: string;
   description: string;
-  duration: string;
-  allocation: string;
-  recipient: Address;
-  creator?: Address;
-  createdAt: string;
+  token: string;
+  recipient: string;
+  duration: number;
+  capyNftId: string;
+  recipientDriverAccountId: string;
+  createdAt: number;
+  totalAllocation: string;
 }
