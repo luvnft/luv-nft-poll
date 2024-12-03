@@ -45,7 +45,7 @@ import useStore from "@/store";
 import { Token } from "@/types";
 import { useAccount } from "wagmi";
 
-type TimeUnit = "minutes" | "hours" | "days" | "weeks";
+type TimeUnit = "seconds" | "minutes" | "hours" | "days" | "weeks";
 
 const FormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -56,13 +56,13 @@ const FormSchema = z.object({
   amount: z.number().min(1, { message: "Amount must be greater than 0" }),
   description: z.string().optional(),
   registrationStartValue: z.number().min(1),
-  registrationStartUnit: z.enum(["minutes", "hours", "days", "weeks"]),
+  registrationStartUnit: z.enum(["seconds", "minutes", "hours", "days", "weeks"]),
   registrationEndValue: z.number().min(1),
-  registrationEndUnit: z.enum(["minutes", "hours", "days", "weeks"]),
+  registrationEndUnit: z.enum(["seconds", "minutes", "hours", "days", "weeks"]),
   allocationStartValue: z.number().min(1),
-  allocationStartUnit: z.enum(["minutes", "hours", "days", "weeks"]),
+  allocationStartUnit: z.enum(["seconds", "minutes", "hours", "days", "weeks"]),
   allocationEndValue: z.number().min(1),
-  allocationEndUnit: z.enum(["minutes", "hours", "days", "weeks"]),
+  allocationEndUnit: z.enum(["seconds", "minutes", "hours", "days", "weeks"]),
 });
 
 const NewTrustFund = () => {
@@ -103,6 +103,7 @@ const NewTrustFund = () => {
 
   const getMilliseconds = (value: number, unit: TimeUnit) => {
     const multipliers = {
+      seconds: 1000,
       minutes: 60 * 1000,
       hours: 60 * 60 * 1000,
       days: 24 * 60 * 60 * 1000,
@@ -303,7 +304,7 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["minutes", "hours", "days", "weeks"].map((unit) => (
+                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
                           <SelectItem key={unit} value={unit}>
                             {unit}
                           </SelectItem>
@@ -351,7 +352,7 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["minutes", "hours", "days", "weeks"].map((unit) => (
+                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
                           <SelectItem key={unit} value={unit}>
                             {unit}
                           </SelectItem>
@@ -402,7 +403,7 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["minutes", "hours", "days", "weeks"].map((unit) => (
+                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
                           <SelectItem key={unit} value={unit}>
                             {unit}
                           </SelectItem>
@@ -450,7 +451,7 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["minutes", "hours", "days", "weeks"].map((unit) => (
+                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
                           <SelectItem key={unit} value={unit}>
                             {unit}
                           </SelectItem>
