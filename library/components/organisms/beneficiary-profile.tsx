@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy, DollarSign } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -23,28 +24,12 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/atoms/drawer";
+import { Progress } from "@/components/atoms/progress";
+import { Beneficiary } from "@/hooks/use-fund-data";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { isValidUrl } from "@/utils";
-import { Copy, DollarSign } from "lucide-react";
-import { Progress } from "../atoms/progress";
 
-interface Beneficiary {
-  id: number;
-  name: string;
-  description: string;
-  avatarUrl: string;
-  address: `0x{string}`;
-  percentage: number;
-}
-
-const Beneficiary = ({
-  id,
-  name,
-  description,
-  avatarUrl,
-  address,
-  percentage,
-}: Beneficiary) => {
+const BeneficiaryProfile = ({ data }: { data: Beneficiary }) => {
   const [open, setOpen] = useState(false);
 
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -54,7 +39,10 @@ const Beneficiary = ({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">
           <Image
-            src={isValidUrl(avatarUrl) || `https://avatar.vercel.sh/${address}`}
+            src={
+              isValidUrl(data.avatar) ||
+              `https://avatar.vercel.sh/${data.address}`
+            }
             alt={`${name} logo`}
             width={48}
             height={48}
@@ -63,8 +51,8 @@ const Beneficiary = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{name}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <div className="text-2xl font-bold">{data.name}</div>
+        <p className="text-xs text-muted-foreground">{data.bio}</p>
       </CardContent>
     </Card>
   );
@@ -77,9 +65,12 @@ const Beneficiary = ({
           <div className=" flex flex-col items-center">
             <div className=" flex gap-2 items-center">
               <DollarSign />
-              <p className=" text-4xl font-medium">+2222</p>
+              <p className=" text-4xl font-medium">
+                {data.streamProgress.remaining}
+              </p>
               <p className=" text-green-400 text-2xl">USDe</p>
             </div>
+            {/* TODO: convert sUSDe to usd */}
             <p className=" text-xs">$2222 USD</p>
           </div>
         </div>
@@ -87,44 +78,28 @@ const Beneficiary = ({
         <div className=" flex gap-2 items-center rounded-full bg-gray-200 py-2 px-4">
           <p>Total Amount</p>
           <div className=" w-2 h-2 rounded-full bg-green-400"></div>
-          <p>$3000</p>
+          {/* TODO: convert sUSDe to usd */}
+          <p>${data.allocation}</p>
         </div>
 
         <div className=" p-4 bg-gray-200"></div>
 
         <div className=" rounded-md p-2 flex gap-4 border border-gray-200">
           <div className=" h-5 w-5 bg-black rounded-full"></div>
-          <p className="text-sm"> {address}</p>
-          <button onClick={() => navigator.clipboard.writeText(address)}>
+          <p className="text-sm"> {data.address}</p>
+          <button onClick={() => navigator.clipboard.writeText(data.address)}>
             <Copy width={16} />
           </button>
         </div>
       </div>
 
       <div className="flex items-center gap-4 w-full">
-      <Progress value={percentage} />
-
-        {/* Percentage Text */}
-        <span className=" text-sm font-semibold">{percentage}%</span>
+        <Progress value={data.streamProgress.percentage} />
+        <span className=" text-sm font-semibold">
+          {data.streamProgress.percentage}%
+        </span>
       </div>
     </div>
-    // <Card className="h-full transition-shadow hover:shadow-md">
-    //   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-    //     <CardTitle className="text-sm font-medium">
-    //       <Image
-    //         src={isValidUrl(avatarUrl) || `https://avatar.vercel.sh/${address}`}
-    //         alt={`${name} logo`}
-    //         width={48}
-    //         height={48}
-    //         className="aspect-[1] rounded-full object-cover"
-    //       />
-    //     </CardTitle>
-    //   </CardHeader>
-    //   <CardContent>
-    //     <div className="text-2xl font-bold">{name}</div>
-    //     <p className="text-xs text-muted-foreground">{description}</p>
-    //   </CardContent>
-    // </Card>
   );
 
   if (isDesktop) {
@@ -158,4 +133,4 @@ const Beneficiary = ({
   );
 };
 
-export default Beneficiary;
+export default BeneficiaryProfile;
