@@ -43,7 +43,7 @@ const BeneficiaryProfile = ({ data }: { data: Beneficiary }) => {
               isValidUrl(data.avatar) ||
               `https://avatar.vercel.sh/${data.address}`
             }
-            alt={`${name} logo`}
+            alt={`${data.name} logo`}
             width={48}
             height={48}
             className="aspect-[1] rounded-full object-cover"
