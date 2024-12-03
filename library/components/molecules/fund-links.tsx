@@ -1,13 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/atoms/card";
-import { isValidUrl } from "@/utils";
+import { getInitials, isValidUrl } from "@/utils";
 
 interface FundLink {
   strategyAddress: string;
@@ -16,18 +16,26 @@ interface FundLink {
   avatarUrl: string;
 }
 
-const FundLink = ({ strategyAddress, name, description, avatarUrl }: FundLink) => (
+const FundLink = ({
+  strategyAddress,
+  name,
+  description,
+  avatarUrl,
+}: FundLink) => (
   <Link href={`/trust/${strategyAddress}`}>
     <Card className="h-full transition-shadow hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">
-          <Image
-            src={isValidUrl(avatarUrl) || `https://avatar.vercel.sh/${strategyAddress}`}
-            alt={`${name} logo`}
-            width={48}
-            height={48}
-            className="aspect-[1] rounded-full object-cover"
-          />
+          <Avatar>
+            <AvatarImage
+              src={
+                isValidUrl(avatarUrl) ||
+                `https://avatar.vercel.sh/${strategyAddress + name}`
+              }
+              alt={`${name} logo`}
+            />
+            <AvatarFallback>{getInitials(name)}</AvatarFallback>
+          </Avatar>
         </CardTitle>
       </CardHeader>
       <CardContent>
