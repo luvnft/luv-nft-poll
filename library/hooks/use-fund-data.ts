@@ -174,22 +174,30 @@ const useFundData = (strategyAddress?: Address) => {
           (r: any) => r.recipientAddress === dist.recipientIds[0]
         );
 
-        const endTime = Number(dist.blockTimestamp) + Number(dist.duration);
+        const startTime = Number(dist.blockTimestamp);
+        const endTime = startTime + Number(dist.duration);
         const totalDuration = Number(dist.duration);
-        const elapsed = currentTime - Number(dist.blockTimestamp);
-        const percentage = Math.min((elapsed / totalDuration) * 100, 100);
+        
+        // Calculate elapsed time, capped at total duration
+        const elapsed = Math.min(currentTime - startTime, totalDuration);
+        
+        // Calculate percentage complete
+        const percentage = (elapsed / totalDuration) * 100;
+
+        // Calculate remaining amount based on elapsed time
+        const remainingDuration = Math.max(0, totalDuration - elapsed);
+        const totalAllocation = BigInt(dist.allocations[0]);
+        const remaining = (totalAllocation * BigInt(remainingDuration)) / BigInt(totalDuration);
 
         return {
           address: dist.recipientIds[0],
           name: recipient?.name || "",
           avatar: recipient?.avatar || "",
           bio: recipient?.bio || "",
-          allocation: BigInt(dist.allocations[0]),
+          allocation: totalAllocation,
           streamProgress: {
             percentage,
-            remaining:
-              (BigInt(dist.allocations[0]) * BigInt(totalDuration - elapsed)) /
-              BigInt(totalDuration),
+            remaining,
             endsAt: formatDistanceToNow(new Date(endTime * 1000), {
               addSuffix: true,
             }),
