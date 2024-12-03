@@ -1,185 +1,167 @@
 "use client";
 
-import Image from "next/image";
-import { formatEther } from "viem";
-
-import { Alert, AlertDescription } from "@/components/atoms/alert";
-import { Button } from "@/components/atoms/button";
-import { Separator } from "@/components/atoms/separator";
-import { useDripsManagement } from "@/hooks/use-drips-management";
-import { FundingFlowState, Token } from "@/types";
-import { cn, ellipsisAddress } from "@/utils";
 import { ArrowUpRight } from "lucide-react";
 
-const CollectHead = (collect: { token: Token }) => {
-  const { optimalReceivableAmount, splittableAmount, collectableAmount } =
-    useDripsManagement(collect.token.address);
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
+import { Button } from "@/components/atoms/button";
+import { Separator } from "@/components/atoms/separator";
+import { GroupedStream } from "@/types";
+import { cn, getInitials, isValidUrl } from "@/utils";
+import useCapyProtocol from "@/hooks/use-capy-protocol";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
-  const totalReceivableAmount =
-    (optimalReceivableAmount || BigInt(0)) +
-    (splittableAmount || BigInt(0)) +
-    (collectableAmount || BigInt(0));
-
+const CollectHead = ({ stream }: { stream: GroupedStream }) => {
   return (
     <div className="flex gap-5 items-center">
-      
-      <div className="relative w-fit">
-        <Image
-          src={`https://avatar.vercel.sh/${collect.token.address}`}
-          alt={`${collect.token.symbol} logo`}
-          width={48}
-          height={48}
-          className="aspect-[1] rounded-full h-fit w-fit object-cover"
+      <Avatar>
+        <AvatarImage
+          src={
+            isValidUrl(stream.avatar) ||
+            `https://avatar.vercel.sh/${stream.strategyAddress + stream.name}`
+          }
+          alt={`${stream.name} logo`}
         />
-      </div>
+        <AvatarFallback>{getInitials(stream.name)}</AvatarFallback>
+      </Avatar>
 
-      <div className="flex flex-col gap-2 text-gray-700">
-        <h3 className=" font-medium">
-          {ellipsisAddress(collect.token.address, 8)}
-        </h3>
+      <div className="flex items-start flex-col gap-2 text-gray-700">
+        <h3 className="text-xl font-bold tracking-tight">{stream.name}</h3>
         <p className="text-sm w-fit">
-          Total Receivable:{" "}
-          <strong>
-            {" "}
-            {formatEther(totalReceivableAmount)} {collect.token.symbol}
-          </strong>
+          Total Allocation:{" "}
+          <strong>{BigInt(stream.totalAllocation)} sUSDc</strong>
         </p>
       </div>
     </div>
   );
 };
 
-const CollectBody = (collect: {
-  token: Token;
-  fundingFlows: FundingFlowState[];
-}) => {
-  const {
-    optimalReceivableAmount,
-    splittableAmount,
-    collectableAmount,
-    handleReceiveAndCollect,
-    isReceiving,
-    isReceiveStreamsProcessing,
-    isSpliting,
-    isSplitProcessing,
-    isCollecting,
-    isCollectProcessing,
-  } = useDripsManagement(collect.token.address);
+const CollectBody = ({ stream }: { stream: GroupedStream }) => {
+  const { findOptimalCycles, fundsOut } = useCapyProtocol();
+  const [optimalReceivableAmount, setOptimalReceivableAmount] = useState<{
+    minNonZeroCycle: number;
+    maxReceivableCycle: number;
+    maxReceivableAmount: bigint;
+  } | null>(null);
+  const [isCollecting, setIsCollecting] = useState(false);
 
-  const totalReceivableAmount =
-    (optimalReceivableAmount || BigInt(0)) +
-    (splittableAmount || BigInt(0)) +
-    (collectableAmount || BigInt(0));
+  useEffect(() => {
+    const fetchOptimalCycles = async () => {
+      const result = await findOptimalCycles(
+        BigInt(stream.recipientDriverAccountId),
+        stream.token as `0x${string}`,
+        1_000_000_000
+      );
+      setOptimalReceivableAmount(result);
+
+      console.log(result);
+    };
+
+    fetchOptimalCycles();
+  }, [stream]);
+
+  const handleReceiveAndCollect = async () => {
+    if (!optimalReceivableAmount) return;
+
+    setIsCollecting(true);
+    try {
+      await fundsOut({
+        poolId: BigInt(stream.poolId),
+        capyNftId: BigInt(stream.capyNftId),
+        recipient: stream.recipient as `0x${string}`,
+        maxCycles: optimalReceivableAmount.maxReceivableCycle,
+        token: stream.token as `0x${string}`,
+      });
+      console.log("Funds collected successfully");
+    } catch (error) {
+      console.error("Error applying to trust fund:", error);
+      toast.error(
+        `Application failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      setIsCollecting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      <Alert>
-        <AlertDescription>
-          Clicking <strong>Collect Funds</strong> batches your receivable,
-          splittable and collectable funds.
-        </AlertDescription>
-      </Alert>
-
-      <div className="flex flex-col gap-6 text-gray-700 w-full">
-        <div className="flex flex-row justify-between">
-          <div className=" flex flex-col gap-4">
-            <p className=" text-sm">Receivable</p>
-            <p className=" font-medium">
-              {optimalReceivableAmount
-                ? formatEther(optimalReceivableAmount)
-                : "0"}{" "}
-              {collect.token.symbol}
+      <div className="flex flex-col">
+        <div className="flex flex-col gap-3">
+          <div className=" flex justify-between items-center">
+            <p className="text-sm text-gray-600">Creator</p>
+            <a
+              href={`/trust/${stream.strategyAddress}`}
+              className="font-medium underline"
+            >
+              {stream.strategyAddress}
+            </a>
+          </div>
+          <div className=" flex justify-between items-center">
+            <p className="text-sm text-gray-600">Allocation</p>
+            <p className=" font-medium">{stream.totalAllocation} sUSDc</p>
+          </div>
+          <div className=" flex justify-between items-center">
+            <p className="text-sm text-gray-600">Duration</p>
+            <p className=" font-medium">{stream.duration / 60} mins</p>
+          </div>
+          <div className=" flex justify-between items-start gap-4">
+            <p className="text-sm text-gray-600">Created</p>
+            <p className=" font-medium max">
+              {(() => {
+                const date = new Date(stream.createdAt);
+                const formattedDate = date
+                  .toISOString()
+                  .slice(0, 19)
+                  .replace("T", " ");
+                return formattedDate;
+              })()}
             </p>
           </div>
-          <div className=" flex flex-col gap-4">
-            <p className=" text-sm">Splittable</p>
-            <p className=" font-medium">
-              {splittableAmount ? formatEther(splittableAmount) : "0"}{" "}
-              {collect.token.symbol}
-            </p>
-          </div>
-          <div className=" flex flex-col gap-4">
-            <p className=" text-sm">Collectable</p>
-            <p className=" font-medium">
-              {collectableAmount ? formatEther(collectableAmount) : "0"}{" "}
-              {collect.token.symbol}
-            </p>
+          <div className=" flex justify-between items-start gap-4">
+            <p className="text-sm text-gray-600">Note</p>
+            <p className=" font-medium max-w-[50ch]">{stream?.description}</p>
           </div>
         </div>
-
-        <p className="text-gray-500 font-bold text-xs">
-          Total Receivable: {formatEther(totalReceivableAmount)}{" "}
-          {collect.token.name}
-        </p>
-
-        <Button
-          className={cn(
-            "bg-green-500 hover:bg-green-400 w-fit flex gap-20 h-[50px] px-4"
-          )}
-          onClick={handleReceiveAndCollect}
-          disabled={
-            isReceiving ||
-            isReceiveStreamsProcessing ||
-            isSpliting ||
-            isSplitProcessing ||
-            isCollecting ||
-            isCollectProcessing ||
-            totalReceivableAmount <= BigInt(0)
-          }
-        >
-          <p className=" text-black text-base">
-            {isReceiving || isReceiveStreamsProcessing
-              ? "Processing Streams..."
-              : isSpliting || isSplitProcessing
-              ? "Splitting Funds..."
-              : isCollecting || isCollectProcessing
-              ? "Collecting..."
-              : "Collect Funds"}
-          </p>
-          <div className="w-7 h-7 rounded-full bg-[#191A23] flex justify-center items-center">
-            <ArrowUpRight
-              strokeWidth={3}
-              width={16}
-              className=" text-green-500 "
-            />
-          </div>
-        </Button>
+        <Separator
+          className=" bg-slate-200 hidden sm:block my-4"
+          orientation="horizontal"
+        />
       </div>
 
-      {collect.fundingFlows.map((flow) => {
-        const date = new Date(flow.createdAt);
-        const formattedDate = date.toISOString().slice(0, 19).replace("T", " ");
-        return (
-          <div key={flow.createdAt} className="flex flex-col">
-            <Separator
-              className=" bg-slate-200 hidden sm:block my-4"
-              orientation="horizontal"
-            />
-            <div className="flex flex-col gap-3">
-              {flow.creator && (
-                <div className=" flex justify-between items-center">
-                  <p className="text-sm text-gray-600">Creator</p>
-                  <p className=" font-medium">{flow.creator}</p>
-                </div>
-              )}
-
-              <div className=" flex justify-between items-center">
-                <p className="text-sm text-gray-600">Allocation</p>
-                <p className=" font-medium">{flow.allocation} {flow.token?.symbol}</p>
-              </div>
-              <div className=" flex justify-between items-center">
-                <p className="text-sm text-gray-600">Duration</p>
-                <p className=" font-medium">{parseInt(flow.duration) / 60} mins</p>
-              </div>
-              <div className=" flex justify-between items-center">
-                <p className="text-sm text-gray-600">Note/Date</p>
-                <p className=" font-medium">{flow.description}/ {formattedDate} </p>
-              </div>
-
-            </div>
+      <div className="flex flex-col gap-6 text-gray-700 w-full">
+        <div className="flex flex-row justify-between items-center">
+          <div className=" flex flex-col">
+            <p className=" text-sm">Receivable stream:</p>
+            <p className=" font-medium">
+              {optimalReceivableAmount?.maxReceivableAmount
+                ? optimalReceivableAmount.maxReceivableAmount.toString()
+                : "0"}{" "}
+              sUSDe
+            </p>
           </div>
-        );
-      })}
+
+          <Button
+            className={cn(
+              "bg-green-500 hover:bg-green-400 w-fit flex gap-20 h-[50px] px-4"
+            )}
+            onClick={handleReceiveAndCollect}
+            disabled={isCollecting || !optimalReceivableAmount}
+          >
+            <p className=" text-black text-base">
+              {isCollecting ? "Collecting..." : "Collect Funds"}
+            </p>
+            <div className="w-7 h-7 rounded-full bg-[#191A23] flex justify-center items-center">
+              <ArrowUpRight
+                strokeWidth={3}
+                width={16}
+                className=" text-green-500 "
+              />
+            </div>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
