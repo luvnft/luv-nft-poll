@@ -1,9 +1,8 @@
-import Link from "next/link";
-
-import { AppleCardsCarouselDemo } from "@/components/organisms/example-cards";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
-import React from "react";
+import Link from "next/link";
+
+import TrustTriangleExamples from "@/components/organisms/trust-triangle-examples";
 
 const Home = () => {
   return (
@@ -35,22 +34,21 @@ const Home = () => {
 
         <div className="flex flex-col md:flex-row  justify-between gap-10">
           <div className="md:w-1/2 order-1 md:order-2">
-          <Image
-              src="hero-image.svg"
+            <Image
+              src="/hero-image.svg"
               alt="On-chain token distribution"
               width={600}
               height={540}
             />
-
           </div>
           <div className="md:w-1/2 order-2 md:order-1 text-left lg:w-[550px] flex flex-col gap-9 items-start">
             <h1 className="text-6xl font-medium">
               On-chain token distribution
             </h1>
             <p className=" text-xl ">
-              You&apos;re not just moving money - you&apos;re building trust networks that
-              connect those who want to help, those who need help, and those who
-              can provide specialized support.
+              You&apos;re not just moving money - you&apos;re building trust
+              networks that connect those who want to help, those who need help,
+              and those who can provide specialized support.
             </p>
             <Link href="/trust">
               <button className=" font-medium p-5 rounded-3xl text-xl gap-20 flex items-center bg-[#33CB82] hover:bg-[#33CB82]/80 transition-colors duration-200 ">
@@ -92,7 +90,8 @@ const Home = () => {
         </div>
       </div>
 
-      <AppleCardsCarouselDemo />
+      <TrustTriangleExamples />
+
       <div className=" flex items-center justify-center">
         <Link
           href="https://github.com/kelvinpraises/capyflow"
