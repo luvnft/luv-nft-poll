@@ -40,9 +40,10 @@ import {
 } from "@/components/atoms/select";
 import TokenSelect from "@/components/molecules/select-token";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useTrustStrategy } from "@/hooks/use-trust-strategy";
+import useCapyProtocol from "@/hooks/use-capy-protocol";
 import useStore from "@/store";
 import { Token } from "@/types";
+import { useAccount } from "wagmi";
 
 type TimeUnit = "minutes" | "hours" | "days" | "weeks";
 
@@ -67,10 +68,11 @@ const FormSchema = z.object({
 const NewTrustFund = () => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const { token } = useStore();
-  const { deployTrust } = useTrustStrategy();
+  const { deployTrust } = useCapyProtocol();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const emojiPickerContainerRef = useRef<HTMLDivElement>(null);
+  const { address } = useAccount();
 
   const tokens: Token[] = [
     {
@@ -126,6 +128,10 @@ const NewTrustFund = () => {
   };
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (!address) {
+      throw new Error("please connect wallet");
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -151,6 +157,7 @@ const NewTrustFund = () => {
 
       const params = {
         ...data,
+        address,
         amount: BigInt(data.amount),
         registrationStartTimestamp,
         registrationEndTimestamp,
@@ -161,6 +168,7 @@ const NewTrustFund = () => {
       await deployTrust(params);
 
       toast.success("Trust Fund created successfully!");
+      form.reset();
     } catch (error) {
       console.error("Error creating trust fund:", error);
       toast.error(
@@ -168,7 +176,6 @@ const NewTrustFund = () => {
       );
     } finally {
       setOpen(false);
-      form.reset();
       setIsSubmitting(false);
     }
   };
