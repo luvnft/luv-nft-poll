@@ -20,7 +20,6 @@ import { getBytecode, readContract } from "wagmi/actions";
 
 const REGISTRY_ADDRESS = registry.address as `0x${string}`;
 const ALLO_ADDRESS = allo.address as `0x${string}`;
-const CAPY_STRATEGY_ADDRESS = capyStrategy.address as `0x${string}`;
 const CAPY_STRATEGY_FACTORY_ADDRESS =
   capyStrategyFactory.address as `0x${string}`;
 const CAPY_CORE_ADDRESS = capyCore.address as `0x${string}`;
@@ -85,6 +84,7 @@ type FunctionParams = {
   };
   updateRecipientStatus: {
     recipientId: Address;
+    strategyAddress: Address;
     status: number;
   };
   allocate: {
@@ -279,7 +279,7 @@ const useCapyProtocol = () => {
     async (params: FunctionParams["updateRecipientStatus"]) => {
       const { request } = await simulateContract(config, {
         abi: CAPY_STRATEGY_ABI,
-        address: CAPY_STRATEGY_ADDRESS,
+        address: params.strategyAddress,
         functionName: "updateRecipientStatus",
         args: [params.recipientId, params.status],
       });
