@@ -3,6 +3,7 @@ import { ConnectKitButton } from "connectkit";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
+import Image from "next/image";
 
 import useCapyProtocol from "@/hooks/use-capy-protocol";
 import useStore from "@/store";
@@ -149,71 +150,84 @@ const Registrar = () => {
   }, [isConnected, stepper]);
 
   return (
-    <div className=" none md:flex fixed inset-0 items-center justify-center">
-      <Card className="w-[900px] p-6 flex flex-col md:flex-row items-center gap-20">
-        <div>
-          <div className="flex justify-between mb-6">
-            <h2 className="text-lg font-medium">Setup CapyFlows</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Step {stepper.current.index + 1} of {steps.length}
-              </span>
+    <div className="flex items-center justify-center w-full md:mt-12">
+      <div className="p-4 md:flex items-center justify-center">
+        <Card className="max-w-[900px] p-6 flex flex-col md:flex-row items-center gap-20">
+          <div>
+            <div className="flex justify-between mb-6">
+              <h2 className="text-lg font-medium">Setup CapyFlows</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Step {stepper.current.index + 1} of {steps.length}
+                </span>
+              </div>
             </div>
+
+            <nav aria-label="Setup Steps" className="group mb-6">
+              <ol className="flex flex-col gap-2">
+                {stepper.all.map((step, index, array) => (
+                  <React.Fragment key={step.id}>
+                    <li className="flex items-center gap-4">
+                      <Button
+                        type="button"
+                        variant={
+                          index <= stepper.current.index
+                            ? "default"
+                            : "secondary"
+                        }
+                        className="flex size-10 items-center justify-center rounded-full"
+                        disabled={!isConnected && step.id !== "connect"}
+                      >
+                        {index + 1}
+                      </Button>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {step.title}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {step.description}
+                        </span>
+                      </div>
+                    </li>
+                    <div className="flex h-full">
+                      {index < array.length - 1 && (
+                        <div className="ml-5 min-h-4">
+                          <Separator
+                            orientation="vertical"
+                            className={`h-full ${
+                              index === stepper.current.index
+                                ? "bg-primary"
+                                : "bg-muted"
+                            }`}
+                          />
+                        </div>
+                      )}
+                      {stepper.current.id === step.id && (
+                        <div className="ml-14 mb-4">
+                          {stepper.switch({
+                            connect: () => <Wallet />,
+                            profile: () => <Profile />,
+                            complete: () => <Complete />,
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </React.Fragment>
+                ))}
+              </ol>
+            </nav>
           </div>
 
-          <nav aria-label="Setup Steps" className="group mb-6">
-            <ol className="flex flex-col gap-2">
-              {stepper.all.map((step, index, array) => (
-                <React.Fragment key={step.id}>
-                  <li className="flex items-center gap-4">
-                    <Button
-                      type="button"
-                      variant={
-                        index <= stepper.current.index ? "default" : "secondary"
-                      }
-                      className="flex size-10 items-center justify-center rounded-full"
-                      disabled={!isConnected && step.id !== "connect"}
-                    >
-                      {index + 1}
-                    </Button>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">{step.title}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {step.description}
-                      </span>
-                    </div>
-                  </li>
-                  {index < array.length - 1 && (
-                    <div className="ml-5 py-4">
-                      <Separator
-                        orientation="vertical"
-                        className={`h-full ${
-                          index < stepper.current.index
-                            ? "bg-primary"
-                            : "bg-muted"
-                        }`}
-                      />
-                    </div>
-                  )}
-                  {stepper.current.id === step.id && (
-                    <div className="ml-14 mb-4">
-                      {stepper.switch({
-                        connect: () => <Wallet />,
-                        profile: () => <Profile />,
-                        complete: () => <Complete />,
-                      })}
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-            </ol>
-          </nav>
-        </div>
-
-        <div className="md:w-1/2 order-1 md:order-2">
-          <img src="trust-page.png" alt="On-chain token distribution" className="" />
-        </div>
-      </Card>
+          <div className="md:w-1/2 order-1 md:order-2">
+            <Image
+              src="/trust-page.png"
+              alt="On-chain token distribution"
+              width={600}
+              height={540}
+            />
+          </div>
+        </Card>
+      </div>
     </div>
   );
 };
