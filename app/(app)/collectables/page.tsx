@@ -36,7 +36,7 @@ const ErrorState = ({ error }: { error: Error }) => (
     <div className="flex flex-col items-center justify-center">
       <Image
         alt="errors happeneth"
-        src="error-state.svg"
+        src="/error-state.svg"
         width={120}
         height={120}
       />
@@ -54,7 +54,7 @@ const ErrorState = ({ error }: { error: Error }) => (
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center h-full ">
     <div className="flex flex-col items-center justify-center">
-      <Image alt="empty state" src="empty-state.svg" width={120} height={120} />
+      <Image alt="empty state" src="/empty-state.svg" width={120} height={120} />
       <h2 className="text-sm text-center sm:text-xl text-black mt-4">
         Available streams will show <br /> here after scan
       </h2>
