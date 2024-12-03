@@ -139,9 +139,9 @@ const CollectFlows = ({ groupedFlows }: { groupedFlows: GroupedFlows[] }) => (
 );
 
 const CollectPage = () => {
-  const [groupedFlows, setGroupedFlows] = useState(sampleGroupedFlows);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [groupedFlows] = useState(sampleGroupedFlows);
+  const [isLoading] = useState(false);
+  const [error] = useState<Error | null>(null);
 
   const renderContent = () => {
     if (isLoading) {
