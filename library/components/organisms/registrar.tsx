@@ -211,7 +211,7 @@ const Registrar = () => {
         </div>
 
         <div className="md:w-1/2 order-1 md:order-2">
-          <img src="test.svg" alt="On-chain token distribution" className="" />
+          <img src="trust-page.png" alt="On-chain token distribution" className="" />
         </div>
       </Card>
     </div>
