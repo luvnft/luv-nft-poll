@@ -28,6 +28,7 @@ import { useMounted } from "@/hooks/use-mounted";
 import { useTrustStrategy } from "@/hooks/use-trust-strategy";
 import useStore from "@/store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
+import Image from "next/image";
 
 const { useStepper, steps } = defineStepper(
   {
@@ -168,7 +169,7 @@ const LoadingState = () => {
 
   return (
     <div className=" none md:flex fixed inset-0 items-center justify-center">
-      <Card className="w-[900px] p-6 flex flex-col md:flex-row items-center gap-20">
+      <Card className="w-[1000px] p-6 flex flex-col md:flex-row items-center gap-20">
         <div>
           <div className="flex justify-between mb-6">
             <h2 className="text-lg font-medium">Setup CapyFlows</h2>
@@ -229,7 +230,12 @@ const LoadingState = () => {
         </div>
 
         <div className="md:w-1/2 order-1 md:order-2">
-          <img src="test.svg" alt="On-chain token distribution" className="" />
+          <Image
+            src={"/trust-page.png"}
+            width={700}
+            height={600}
+            alt={"trust page "}
+          />
         </div>
       </Card>
     </div>
