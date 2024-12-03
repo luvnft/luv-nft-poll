@@ -1,22 +1,53 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/atoms/card";
+"use client";
+
+import { Loader } from "lucide-react";
+import { useParams } from "next/navigation";
+import { Address } from "viem";
+
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/atoms/tabs";
-import Beneficiary from "@/components/organisms/beneficiary";
+import FundStats from "@/components/molecules/fund-stats";
+import Beneficiary from "@/components/organisms/beneficiary-profile";
 import NewTrustFundApplication from "@/components/organisms/trust-fund-application";
+import useFundData from "@/hooks/use-fund-data";
+import { useMounted } from "@/hooks/use-mounted";
+import { ellipsisAddress } from "@/utils";
+import ParticipantProfile from "@/components/organisms/participant-profile";
 
 const Fund = () => {
+  const params = useParams();
+  const fund = params.fund as Address;
+  const isMounted = useMounted();
+
+  const { beneficiaries, strategy, participants, isLoading, error } =
+    useFundData(fund);
+
+  if (!isMounted) return null;
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <Loader className="animate-spin text-gray-500 mt-36 mb-4" size={24} />
+        <p className="text-gray-700">Loading funds...</p>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        {error.message}
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6">
-      <h2 className="text-3xl font-bold tracking-tight">Sample Trust</h2>
+      <h2 className="text-3xl font-bold tracking-tight">
+        {strategy?.name || `Trust ${ellipsisAddress(fund)}`}
+      </h2>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <div className="flex items-center justify-between gap-2">
@@ -31,67 +62,52 @@ const Fund = () => {
             </TabsTrigger>
           </TabsList>
           <div className="flex items-center space-x-2">
-            <NewTrustFundApplication />
+            {strategy?.poolId && (
+              <NewTrustFundApplication poolId={strategy?.poolId} />
+            )}
           </div>
         </div>
 
         <TabsContent value="overview" className="space-y-4">
           <div>
             <h2 className="text-xl font-bold tracking-tight">Overview</h2>
-            <p>This is a sample trust fund.</p>
+            {strategy?.description || <p>This is trust fund {fund}.</p>}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Trust Contract
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">0xcaa5...9f0aa</div>
-                <p className="text-xs text-muted-foreground">
-                  Deployed a month ago
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pool Size</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">2,350 USDe</div>
-                <p className="text-xs text-muted-foreground">
-                  +0% from last month
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <FundStats data={strategy} />
 
           <h3 className="text-lg font-bold tracking-tight">Beneficiaries</h3>
 
           <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-            <Beneficiary
-              id={0}
-              name={"Don't know"}
-              description={"Happy "}
-              avatarUrl={""}
-              address={"0x{string}"}
-              percentage={70}
-            />
-            <Beneficiary
-              id={1}
-              name={"Ethena Foundation"}
-              description={"Happy Men"}
-              avatarUrl={""}
-              address={"0x{string}"}
-              percentage={90}
-            />
+            {beneficiaries.length > 0 ? (
+              beneficiaries.map((beneficiary) => (
+                <Beneficiary key={beneficiary.address} data={beneficiary} />
+              ))
+            ) : (
+              <div className="col-span-full text-center text-gray-500">
+                No beneficiaries found
+              </div>
+            )}
           </div>
         </TabsContent>
 
-        <TabsContent value="trusts" className="space-y-4">
-          <h2 className="text-3xl font-bold tracking-tight">Trusts</h2>
+        <TabsContent value="participants" className="space-y-4">
+          <h2 className="text-xl font-bold tracking-tight">Participants</h2>
+          <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+            {participants.length > 0 ? (
+              participants.map((participant) => (
+                <ParticipantProfile
+                  key={participant.address}
+                  data={{...participant, strategyAddress: strategy?.strategyAddress!}}
+                  isAdmin
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center text-gray-500">
+                No participants found
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
