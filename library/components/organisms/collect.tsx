@@ -1,16 +1,16 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { formatEther } from "viem";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import { Button } from "@/components/atoms/button";
 import { Separator } from "@/components/atoms/separator";
+import useCapyProtocol from "@/hooks/use-capy-protocol";
 import { GroupedStream } from "@/types";
 import { cn, getInitials, isValidUrl } from "@/utils";
-import useCapyProtocol from "@/hooks/use-capy-protocol";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { formatEther } from "viem";
 
 const CollectHead = ({ stream }: { stream: GroupedStream }) => {
   return (
