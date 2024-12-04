@@ -66,7 +66,8 @@ const BeneficiaryProfile = ({ data }: { data: Beneficiary }) => {
             <div className=" flex gap-2 items-center">
               <DollarSign />
               <p className=" text-4xl font-medium">
-                {data.allocation - data.streamProgress.remaining}
+                {parseInt(data.allocation) -
+                  parseInt(data.streamProgress.remaining)}
               </p>
               <p className=" text-green-400 text-2xl">USDe</p>
             </div>
