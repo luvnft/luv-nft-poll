@@ -17,29 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/atoms/select";
+import { Participant } from "@/hooks/use-fund-data";
 import { ellipsisAddress, getInitials, isValidUrl } from "@/utils";
-
-interface Participant {
-  address: Address;
-  strategyAddress: Address;
-  name: string;
-  bio: string;
-  avatar: string;
-  status:
-    | "None"
-    | "Pending"
-    | "Accepted"
-    | "Rejected"
-    | "Appealed"
-    | "InReview"
-    | "Canceled";
-  allocation: bigint;
-}
 
 type Step = "allocation" | "registration" | "distribution";
 
 interface ParticipantProfileProps {
-  data: Participant;
+  data: Participant & { strategyAddress: Address };
   isAdmin?: boolean;
   step?: Step;
   onStatusChange?: (address: Address, status: Participant["status"]) => void;

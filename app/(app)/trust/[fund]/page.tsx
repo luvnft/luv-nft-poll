@@ -3,7 +3,12 @@
 import * as React from "react";
 import { Loader } from "lucide-react";
 import { useParams } from "next/navigation";
-import { Address, encodeAbiParameters, parseAbiParameters } from "viem";
+import {
+  Address,
+  encodeAbiParameters,
+  parseAbiParameters,
+  parseEther,
+} from "viem";
 import { formatDistanceToNow, format } from "date-fns";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -57,6 +62,8 @@ const Fund = () => {
   const { beneficiaries, strategy, participants, isLoading, error } =
     useFundData(fund);
 
+  console.log(participants);
+
   // State for tracking changes in participant statuses and allocations
   const [participantChanges, setParticipantChanges] = React.useState<{
     [address: string]: {
@@ -92,7 +99,7 @@ const Fund = () => {
         return participants.filter((p) => p.status === "Accepted");
       case "distribution":
         return participants.filter(
-          (p) => p.allocation > 0 && p.status === "Accepted"
+          (p) => parseInt(p.allocation) > 0 && p.status === "Accepted"
         );
       default:
         return participants;
@@ -157,7 +164,7 @@ const Fund = () => {
           .reduce(
             (acc, [address, changes]) => {
               acc.addresses.push(address as Address);
-              acc.amounts.push(BigInt(changes.allocation!));
+              acc.amounts.push(parseEther(changes.allocation!));
               return acc;
             },
             { addresses: [] as Address[], amounts: [] as bigint[] }

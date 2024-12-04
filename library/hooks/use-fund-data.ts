@@ -1,9 +1,9 @@
-import { config } from "@/providers/wagmi/config";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Address, formatEther } from "viem";
 import { readContract } from "wagmi/actions";
 
+import { config } from "@/providers/wagmi/config";
 import capyStrategy from "@/types/contracts/capy-strategy";
 
 const CAPY_STRATEGY_ABI = capyStrategy.abi;
@@ -13,10 +13,10 @@ export interface Beneficiary {
   name: string;
   avatar: string;
   bio: string;
-  allocation: bigint;
+  allocation: string;
   streamProgress: {
     percentage: number;
-    remaining: bigint;
+    remaining: string;
     endsAt: string;
   };
 }
@@ -26,7 +26,7 @@ export interface Participant {
   name: string;
   avatar: string;
   bio: string;
-  allocation: bigint;
+  allocation: string;
   status:
     | "None"
     | "Pending"
@@ -177,27 +177,28 @@ const useFundData = (strategyAddress?: Address) => {
         const startTime = Number(dist.blockTimestamp);
         const endTime = startTime + Number(dist.duration);
         const totalDuration = Number(dist.duration);
-        
+
         // Calculate elapsed time, capped at total duration
         const elapsed = Math.min(currentTime - startTime, totalDuration);
-        
+
         // Calculate percentage complete
         const percentage = (elapsed / totalDuration) * 100;
 
         // Calculate remaining amount based on elapsed time
         const remainingDuration = Math.max(0, totalDuration - elapsed);
         const totalAllocation = BigInt(dist.allocations[0]);
-        const remaining = (totalAllocation * BigInt(remainingDuration)) / BigInt(totalDuration);
+        const remaining =
+          (totalAllocation * BigInt(remainingDuration)) / BigInt(totalDuration);
 
         return {
           address: dist.recipientIds[0],
           name: recipient?.name || "",
           avatar: recipient?.avatar || "",
           bio: recipient?.bio || "",
-          allocation: totalAllocation,
+          allocation: formatEther(BigInt(totalAllocation)),
           streamProgress: {
             percentage,
-            remaining,
+            remaining: formatEther(BigInt(remaining)),
             endsAt: formatDistanceToNow(new Date(endTime * 1000), {
               addSuffix: true,
             }),
@@ -274,8 +275,8 @@ const useFundData = (strategyAddress?: Address) => {
             statusMap[statusUpdate?.status as keyof typeof statusMap] ||
             "Pending",
           allocation: allocationUpdate
-            ? BigInt(allocationUpdate.newAllocation)
-            : BigInt(0),
+            ? formatEther(BigInt(allocationUpdate.newAllocation))
+            : "0",
         };
       });
     },

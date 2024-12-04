@@ -28,8 +28,7 @@ const CollectHead = ({ stream }: { stream: GroupedStream }) => {
       <div className="flex items-start flex-col gap-2 text-gray-700">
         <h3 className="text-xl font-bold tracking-tight">{stream.name}</h3>
         <p className="text-sm w-fit">
-          Total Allocation:{" "}
-          <strong>{BigInt(stream.totalAllocation)} sUSDc</strong>
+          Total Allocation: <strong>{stream.totalAllocation} sUSDc</strong>
         </p>
       </div>
     </div>

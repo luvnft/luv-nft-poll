@@ -1,8 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
+import { formatEther } from "viem";
+import { readContract } from "wagmi/actions";
+
 import { config } from "@/providers/wagmi/config";
 import allo from "@/types/contracts/allo";
 import { GroupedStream } from "@/types/index";
-import { useQuery } from "@tanstack/react-query";
-import { readContract } from "wagmi/actions";
 
 export const useCollectableData = () => {
   const getCollectableData = (address: string) => {
@@ -97,7 +99,6 @@ export const useCollectableData = () => {
                     query GetStrategy($address: String!) {
                       strategyCreateds(
                         where: { strategyAddress: $address }
-                        first: 1
                       ) {
                         name
                         description
@@ -124,7 +125,7 @@ export const useCollectableData = () => {
       (stream, index): GroupedStream => {
         const strategy = strategyDataQuery.data?.[index];
         return {
-          poolId: streamSetupsQuery.data!![0].poolId,
+          poolId: streamSetupsQuery.data!![index].poolId,
           strategyAddress: stream.strategyAddress || "",
           avatar: strategy?.avatar || "",
           name: strategy?.name || "",
@@ -135,7 +136,7 @@ export const useCollectableData = () => {
           capyNftId: stream.capyNftId,
           recipientDriverAccountId: stream.recipientDriverAccountId,
           createdAt: Number(stream.blockTimestamp) * 1000,
-          totalAllocation: stream.totalAllocation,
+          totalAllocation: formatEther(BigInt(stream.totalAllocation)),
         };
       }
     );

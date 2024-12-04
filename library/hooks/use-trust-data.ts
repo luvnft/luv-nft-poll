@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Address } from "viem";
+import { Address, formatEther } from "viem";
 
 export interface TrustFund {
   name: string;
@@ -9,7 +9,7 @@ export interface TrustFund {
 }
 
 export interface DashboardStats {
-  totalDistributed: bigint;
+  totalDistributed: string;
   ongoingStreams: number;
   activeBeneficiaries: number;
 }
@@ -105,25 +105,19 @@ const useTrustData = (userAddress?: Address) => {
       });
 
       return {
-        totalDistributed,
-        ongoingStreams,
+        totalDistributed: formatEther(BigInt(totalDistributed)),
+        ongoingStreams: ongoingStreams,
         activeBeneficiaries: activeBeneficiariesSet.size,
       } as DashboardStats;
     },
     enabled: !!userAddress,
   });
 
-
-
   return {
     activeFunds: activeFundsQuery.data || [],
     dashboardStats: dashboardStatsQuery.data,
-    isLoading:
-      activeFundsQuery.isLoading ||
-      dashboardStatsQuery.isLoading,
-    error:
-      activeFundsQuery.error ||
-      dashboardStatsQuery.error 
+    isLoading: activeFundsQuery.isLoading || dashboardStatsQuery.isLoading,
+    error: activeFundsQuery.error || dashboardStatsQuery.error,
   };
 };
 
