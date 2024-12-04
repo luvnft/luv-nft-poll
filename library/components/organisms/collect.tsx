@@ -10,6 +10,7 @@ import { cn, getInitials, isValidUrl } from "@/utils";
 import useCapyProtocol from "@/hooks/use-capy-protocol";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { formatEther } from "viem";
 
 const CollectHead = ({ stream }: { stream: GroupedStream }) => {
   return (
@@ -135,7 +136,7 @@ const CollectBody = ({ stream }: { stream: GroupedStream }) => {
             <p className=" text-sm">Receivable stream:</p>
             <p className=" font-medium">
               {optimalReceivableAmount?.maxReceivableAmount
-                ? optimalReceivableAmount.maxReceivableAmount.toString()
+                ? formatEther(optimalReceivableAmount.maxReceivableAmount)
                 : "0"}{" "}
               sUSDe
             </p>
