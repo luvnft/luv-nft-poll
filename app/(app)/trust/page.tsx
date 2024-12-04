@@ -83,7 +83,7 @@ const TrustPage = () => {
         <TabsContent value="overview" className="space-y-4">
           <h2 className="text-xl font-bold tracking-tight">Overview</h2>
           <TrustStats
-            totalDistributed={dashboardStats?.totalDistributed ?? BigInt(0)}
+            totalDistributed={dashboardStats?.totalDistributed ?? "0"}
             ongoingStreams={dashboardStats?.ongoingStreams ?? 0}
             activeBeneficiaries={dashboardStats?.activeBeneficiaries ?? 0}
           />
