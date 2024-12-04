@@ -34,3 +34,6 @@ CapyFlow is creating the next billion onchain trust movement, through innovative
 
 ## The Innovation:
 We are not just moving money - we are building trust networks that connect those who want to help, those who need help, and those who can provide specialized support.
+
+## Subgraph
+[Repository](https://github.com/kelvinpraises/capyflow-subgraph)
