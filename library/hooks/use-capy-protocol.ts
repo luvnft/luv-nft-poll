@@ -206,6 +206,25 @@ const useCapyProtocol = () => {
       ],
     });
     const receipt = await writeContract(config, request);
+
+    // Wait for pool creation transaction to be mined
+    let poolExists = false;
+    while (!poolExists) {
+      try {
+        // Try to read from the pool to verify it exists
+        await readContract(config, {
+          abi: ALLO_ABI,
+          address: ALLO_ADDRESS,
+          functionName: "getPool",
+          args: [result],
+        });
+        poolExists = true;
+      } catch (error) {
+        // If error occurs (pool not found yet), wait and retry
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
     return { poolId: result, createPoolTx: receipt };
   };
 
