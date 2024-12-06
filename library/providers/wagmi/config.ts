@@ -13,7 +13,7 @@ export const config = createConfig(
     multiInjectedProviderDiscovery: true,
     transports: {
       [anvil.id]: http(),
-      [sepolia.id]: http(),
+      [sepolia.id]: http("https://eth-sepolia.g.alchemy.com/v2/vEVKURyIJBdxxahH6eQJOSpjtIe3kA6-"),
     },
   })
 );
