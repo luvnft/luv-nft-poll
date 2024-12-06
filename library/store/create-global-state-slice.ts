@@ -7,13 +7,15 @@ type State = {
     name: string;
     id: Address | null;
   };
-  token: Address;
+  token: {
+    USDe: Address;
+    sUSDe: Address;
+  };
 };
 
 type Actions = {
   setCurrentProfile: (profile: { name: string; id: Address }) => void;
   clearCurrentProfile: () => void;
-  setToken: (token: Address) => void;
 };
 
 export type ConnectorSlice = State & Actions;
@@ -24,7 +26,10 @@ export default persist(
       name: "",
       id: null,
     },
-    token: "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+    token: {
+      USDe: "0xf805ce4F96e0EdD6f0b6cd4be22B34b92373d696",
+      sUSDe: "0x1B6877c6Dac4b6De4c5817925DC40E2BfdAFc01b",
+    },
 
     setCurrentProfile: (profile: { name: string; id: Address }) =>
       set((state) => {
@@ -37,11 +42,6 @@ export default persist(
           name: "",
           id: null,
         };
-      }),
-
-    setToken: (token) =>
-      set((state) => {
-        state.token = token;
       }),
   })),
   {

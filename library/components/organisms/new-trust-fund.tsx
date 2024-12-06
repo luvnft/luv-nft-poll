@@ -78,7 +78,7 @@ const NewTrustFund = () => {
     {
       symbol: "USDe",
       name: "Ethena USD",
-      address: token!,
+      address: token.USDe,
     },
   ];
 
