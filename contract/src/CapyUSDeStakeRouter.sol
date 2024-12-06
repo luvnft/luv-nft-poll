@@ -51,6 +51,9 @@ contract CapyUSDeStakeRouter is ReentrancyGuard {
         // Transfer USDe from user to this contract
         usde.safeTransferFrom(msg.sender, address(this), _amount);
 
+        // Get initial sUSDe balance
+        uint256 initialSUsdeBalance = sUsde.balanceOf(address(this));
+
         // Stake USDe to get sUSDe
         usde.approve(address(sUsde), _amount);
         // Call deposit function on sUsde contract to stake USDe
@@ -63,12 +66,15 @@ contract CapyUSDeStakeRouter is ReentrancyGuard {
         );
         if (!success) revert DEPOSIT_FAILED();
 
+        // Calculate actual sUSDe received
+        uint256 sUsdeReceived = sUsde.balanceOf(address(this)) - initialSUsdeBalance;
+
         // Fund the Allo pool with sUSDe
         (success,) = alloContract.call(
             abi.encodeWithSignature(
                 "fundPool(uint256,uint256)", 
                 _poolId,
-                _amount
+                sUsdeReceived
             )
         );
         if (!success) revert FUND_POOL_FAILED();

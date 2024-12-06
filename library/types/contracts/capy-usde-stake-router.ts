@@ -1,6 +1,6 @@
 const data = {
   name: "CapyUSDeStakeRouter",
-  address: "0x76e722C93Da0bBb9092D725d2a967C7BC1F4C12e",
+  address: "0x8107cFe5eCa96972eFf1DF00A4d43e45559F226c",
   abi: [
     {
       type: "constructor",
