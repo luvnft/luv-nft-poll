@@ -63,7 +63,7 @@ const useFundData = (strategyAddress?: Address) => {
         allocationStartTimeResponse,
         allocationEndTimeResponse,
       ] = await Promise.all([
-        fetch("http://localhost:8000/subgraphs/name/capy-strategy", {
+        fetch("https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.0/gn", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -138,7 +138,7 @@ const useFundData = (strategyAddress?: Address) => {
     queryKey: ["beneficiaries", strategyAddress],
     queryFn: async () => {
       const response = await fetch(
-        "http://localhost:8000/subgraphs/name/capy-strategy",
+        "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.0/gn",
         {
           method: "POST",
           headers: {
@@ -213,7 +213,7 @@ const useFundData = (strategyAddress?: Address) => {
     queryKey: ["participants", strategyAddress],
     queryFn: async () => {
       const response = await fetch(
-        "http://localhost:8000/subgraphs/name/capy-strategy",
+        "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.0/gn",
         {
           method: "POST",
           headers: {
