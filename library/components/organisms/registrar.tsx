@@ -58,11 +58,13 @@ const Profile = () => {
       setCurrentProfile({ id: params.id, name });
       stepper.next();
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("NONCE_NOT_AVAILABLE()")
-      ) {
-        toast.error("You've used the id already. Please try another.");
+      const isError = error instanceof Error;
+      if (isError && error.message.includes("NONCE_NOT_AVAILABLE()")) {
+        toast.error("This ID is already taken. Please try a different one.");
+      } else {
+        const errorMessage = isError ? error.message : 'Unknown error occurred';
+        console.error('Profile creation failed:', errorMessage);
+        toast.error(`Failed to create profile: ${errorMessage}`);
       }
     } finally {
       setIsSubmitting(false);
