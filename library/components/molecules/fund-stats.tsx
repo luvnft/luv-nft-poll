@@ -31,7 +31,7 @@ const FundStats = ({ data }: { data?: Strategy }) => {
           <CardTitle className="text-sm font-medium">Pool Size</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data?.poolSize}</div>
+          <div className="flex items-center text-2xl font-bold">{Number(data?.poolSize).toFixed(3)}&nbsp;<span className="text-lg font-medium">sUSDe</span></div>
           <p className="text-xs text-muted-foreground">+0% from last month</p>
         </CardContent>
       </Card>
