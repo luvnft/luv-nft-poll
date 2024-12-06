@@ -1,6 +1,6 @@
 const data = {
   name: "Registry",
-  address: "0x983d25586AC2f6f56308dB532b6309A4A7c22aE6",
+  address: "0x4e814A67049d82c91cd231c2eA75F93C6Aa1DE66",
   abi: [
     {
       inputs: [
