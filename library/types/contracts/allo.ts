@@ -1,6 +1,6 @@
 const data = {
   name: "Allo",
-  address: "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+  address: "0x4e814A67049d82c91cd231c2eA75F93C6Aa1DE66",
   abi: [
     {
       inputs: [

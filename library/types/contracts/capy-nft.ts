@@ -1,6 +1,6 @@
 const data = {
   name: "CapyNFT",
-  address: "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+  address: "0x987628b9F5aB712D7335FF920317C207401E91f4",
   abi: [
     {
       inputs: [

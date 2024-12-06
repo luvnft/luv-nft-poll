@@ -1,6 +1,6 @@
 const data = {
   name: "NFTDriver",
-  address: "0xF8AB9D746443898666693F1a56d88272980A2E4c",
+  address: "0x0B7c952549436dbC5e0744cCBFc170e6D2652eb8",
   abi: [
     {
       type: "function",

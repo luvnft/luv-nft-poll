@@ -1,12 +1,15 @@
-Registry = 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
-Allo = 0x0165878A594ca255338adfa4d48449f69242Eb8F
-TestToken = 0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1
-CapyNFT = 0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE
-Drips = 0xC776EFe2B6EaA34AF16Bc01e98081775E51C7103
-NFTDriver = 0xF8AB9D746443898666693F1a56d88272980A2E4c
-CapyCore = 0x68B1D87F95878fE05B998F19b66F4baba5De1aed
-CapyTrustStrategy = 0x59b670e9fA9D0A427751Af201D676719a970857b
-CapyTrustStrategyFactory = 0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1
+Drips = 0x3c41c7050590f9C2E572b8708B048a7130691EB9
+NFTDriver = 0x0B7c952549436dbC5e0744cCBFc170e6D2652eb8
+Registry = 0x983d25586AC2f6f56308dB532b6309A4A7c22aE6
+Allo = 0x4e814A67049d82c91cd231c2eA75F93C6Aa1DE66
+USDe = 0xf805ce4F96e0EdD6f0b6cd4be22B34b92373d696
+sUSDe = 0x1B6877c6Dac4b6De4c5817925DC40E2BfdAFc01b
+
+CapyUSDeStakeRouter = 0x61D102857571130e6C4b524b93Dc3f33f199bcf9
+CapyNFT = 0x987628b9F5aB712D7335FF920317C207401E91f4
+CapyCore = 0xaB6719721Ba903b361994c6Ced6e8c7afF7d567B
+CapyTrustStrategy = 0xA7538B977AdC8dd13B3CA454086046E046378f20
+CapyTrustStrategyFactory = 0xbac4154f1B58e7D1e65B0993F3E86Cb54335691a
 
 
 curl https://virtual.base-sepolia.rpc.tenderly.co/52bd1fc8-0a6e-4819-bc10-36077a416924 \
@@ -14,30 +17,31 @@ curl https://virtual.base-sepolia.rpc.tenderly.co/52bd1fc8-0a6e-4819-bc10-36077a
 -H "Content-Type: application/json" \
 -d '{"jsonrpc":"2.0","id":0,"method":"tenderly_setNextBlockTimestamp","params":[1728746584]}'
 
-forge create src/TestToken.sol:TestToken \
---private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
---rpc-url http://127.0.0.1:8545
+forge create src/CapyUSDeStakeRouter.sol:CapyUSDeStakeRouter \
+--private-key $PRIVATE_KEY \
+--rpc-url https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY \
+--constructor-args "usde" "susde" "allo"
 
 
 forge create src/CapyNFT.sol:CapyNFT \
---private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
---rpc-url http://127.0.0.1:8545 \
---constructor-args "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+--private-key $PRIVATE_KEY \
+--rpc-url https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY \
+--constructor-args "0xB754369b3a7C430d7E94c14f33c097C398a0caa5"
 
 
 forge create src/CapyCore.sol:CapyCore \
---private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
---rpc-url http://127.0.0.1:8545 \
+--private-key $PRIVATE_KEY \
+--rpc-url https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY \
 --constructor-args "_nftDriverAddress" "_dripsContract" "_capyNFTAddress"
 
 
 forge create src/CapyTrustStrategy.sol:CapyTrustStrategy \
---private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
---rpc-url http://127.0.0.1:8545 \
---constructor-args "_allo" "_capyCore" "_token"
+--private-key $PRIVATE_KEY \
+--rpc-url https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY \
+--constructor-args "_allo" "_capyCore" "susde"
 
 
 forge create src/CapyTrustStrategyFactory.sol:CapyTrustStrategyFactory \
---private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
---rpc-url http://127.0.0.1:8545 \
+--private-key $PRIVATE_KEY \
+--rpc-url https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY \
 --constructor-args "currentStrategy"
