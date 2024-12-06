@@ -24,7 +24,7 @@ export const useCollectableData = () => {
       queryKey: ["streamSetups", address],
       queryFn: async () => {
         const response = await fetch(
-          "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.0/gn",
+          "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.1/gn",
           {
             method: "POST",
             headers: {
@@ -88,7 +88,7 @@ export const useCollectableData = () => {
         const strategies = await Promise.all(
           streamSetupsQuery.data.map(async (setup: StreamSetup) => {
             const response = await fetch(
-              "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.0/gn",
+              "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.1/gn",
               {
                 method: "POST",
                 headers: {
