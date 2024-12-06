@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { config } from "@/providers/wagmi/config";
 import useStore from "@/store";
 import allo from "@/types/contracts/allo";
+import CapyUSDeStakeRouter from "@/types/contracts/capy-usde-stake-router";
 import capyCore from "@/types/contracts/capy-core";
 import capyStrategy from "@/types/contracts/capy-strategy";
 import capyStrategyFactory from "@/types/contracts/capy-strategy-factory";
@@ -23,6 +24,8 @@ const DRIPS_ADDRESS = drips.address as `0x${string}`;
 
 const REGISTRY_ADDRESS = registry.address as `0x${string}`;
 const ALLO_ADDRESS = allo.address as `0x${string}`;
+const CAPY_USDE_STAKE_ROUTER_ADDRESS =
+  CapyUSDeStakeRouter.address as `0x${string}`;
 const CAPY_STRATEGY_FACTORY_ADDRESS =
   capyStrategyFactory.address as `0x${string}`;
 const CAPY_CORE_ADDRESS = capyCore.address as `0x${string}`;
@@ -30,6 +33,7 @@ const CAPY_CORE_ADDRESS = capyCore.address as `0x${string}`;
 const DRIPS_ABI = drips.abi;
 const REGISTRY_ABI = registry.abi;
 const ALLO_ABI = allo.abi;
+const CAPY_USDE_STAKE_ROUTER_ABI = CapyUSDeStakeRouter.abi;
 const CAPY_STRATEGY_ABI = capyStrategy.abi;
 const CAPY_STRATEGY_FACTORY_ABI = capyStrategyFactory.abi;
 const CAPY_CORE_ABI = capyCore.abi;
@@ -47,7 +51,7 @@ type FunctionParams = {
     owner: Address;
     members: Address[];
   };
-  approveAllo: {
+  approveUSDeRouter: {
     token: Address;
     address: Address;
     amount: bigint;
@@ -65,6 +69,10 @@ type FunctionParams = {
     amount: bigint;
     metadata: Metadata;
     managers: Address[];
+  };
+  fundPool: {
+    poolId: bigint;
+    amount: bigint;
   };
   deployTrust: {
     name: string;
@@ -157,15 +165,15 @@ const useCapyProtocol = () => {
     return { strategy: result, createStrategyTx: receipt };
   };
 
-  const approveAllo = async (params: FunctionParams["approveAllo"]) => {
+  const approveUSDeRouter = async (
+    params: FunctionParams["approveUSDeRouter"]
+  ) => {
     const allowance = await readContract(config, {
       abi: erc20Abi,
       address: params.token,
       functionName: "allowance",
-      args: [params.address, ALLO_ADDRESS],
+      args: [params.address, CAPY_USDE_STAKE_ROUTER_ADDRESS],
     });
-
-    console.log(allowance);
 
     // If allowance is sufficient, no need to approve again
     if (allowance >= params.amount) {
@@ -176,14 +184,14 @@ const useCapyProtocol = () => {
       abi: erc20Abi,
       address: params.token,
       functionName: "approve",
-      args: [ALLO_ADDRESS, params.amount],
+      args: [CAPY_USDE_STAKE_ROUTER_ADDRESS, params.amount],
     });
 
     return writeContract(config, request);
   };
 
   const createPool = async (params: FunctionParams["createPool"]) => {
-    const { request } = await simulateContract(config, {
+    const { request, result } = await simulateContract(config, {
       abi: ALLO_ABI,
       address: ALLO_ADDRESS,
       functionName: "createPoolWithCustomStrategy",
@@ -197,6 +205,17 @@ const useCapyProtocol = () => {
         params.managers,
       ],
     });
+    const receipt = await writeContract(config, request);
+    return { poolId: result, createPoolTx: receipt };
+  };
+
+  const fundPool = async (params: FunctionParams["fundPool"]) => {
+    const { request } = await simulateContract(config, {
+      abi: CAPY_USDE_STAKE_ROUTER_ABI,
+      address: CAPY_USDE_STAKE_ROUTER_ADDRESS,
+      functionName: "fundAlloPool",
+      args: [params.poolId, params.amount],
+    });
     return writeContract(config, request);
   };
 
@@ -206,11 +225,11 @@ const useCapyProtocol = () => {
         throw new Error("Please initialize your trust fund space first");
       }
 
-      const decimals = await getTokenDecimals(token);
+      const decimals = await getTokenDecimals(token.USDe);
       params.amount = parseUnits(params.amount.toString(), decimals);
 
-      const approveAlloTx = await approveAllo({
-        token,
+      const approveUSDeRouterTx = await approveUSDeRouter({
+        token: token.USDe,
         address: params.address,
         amount: params.amount,
       });
@@ -236,8 +255,9 @@ const useCapyProtocol = () => {
         }
       }
 
-      const createPoolTx = await createPool({
+      const { poolId, createPoolTx } = await createPool({
         ...params,
+        amount: BigInt(0),
         profileId: profile.id,
         strategy,
         initStrategyData: encodeAbiParameters(
@@ -249,7 +269,7 @@ const useCapyProtocol = () => {
             BigInt(params.allocationEndTimestamp),
           ]
         ),
-        token: token,
+        token: token.sUSDe,
         metadata: {
           protocol: BigInt(0),
           pointer: "",
@@ -257,7 +277,18 @@ const useCapyProtocol = () => {
         managers: [],
       });
 
-      return { createStrategyTx, approveAlloTx, createPoolTx };
+      // Fund the pool using the router
+      const fundPoolTx = await fundPool({
+        poolId,
+        amount: params.amount,
+      });
+
+      return {
+        createStrategyTx,
+        approveUSDeRouterTx,
+        createPoolTx,
+        fundPoolTx,
+      };
     },
     [profile, token]
   );
