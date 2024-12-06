@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Info } from "lucide-react";
 
 import { Button } from "@/components/atoms/button";
 import {
@@ -38,6 +39,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/atoms/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/atoms/tooltip";
 import TokenSelect from "@/components/molecules/select-token";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import useCapyProtocol from "@/hooks/use-capy-protocol";
@@ -56,7 +63,13 @@ const FormSchema = z.object({
   amount: z.number().min(1, { message: "Amount must be greater than 0" }),
   description: z.string().optional(),
   registrationStartValue: z.number().min(1),
-  registrationStartUnit: z.enum(["seconds", "minutes", "hours", "days", "weeks"]),
+  registrationStartUnit: z.enum([
+    "seconds",
+    "minutes",
+    "hours",
+    "days",
+    "weeks",
+  ]),
   registrationEndValue: z.number().min(1),
   registrationEndUnit: z.enum(["seconds", "minutes", "hours", "days", "weeks"]),
   allocationStartValue: z.number().min(1),
@@ -91,12 +104,12 @@ const NewTrustFund = () => {
       amount: 0,
       description: "",
       registrationStartValue: 1,
-      registrationStartUnit: "hours",
-      registrationEndValue: 10,
+      registrationStartUnit: "seconds",
+      registrationEndValue: 3,
       registrationEndUnit: "minutes",
       allocationStartValue: 1,
-      allocationStartUnit: "hours",
-      allocationEndValue: 10,
+      allocationStartUnit: "seconds",
+      allocationEndValue: 5,
       allocationEndUnit: "minutes",
     },
   });
@@ -116,9 +129,10 @@ const NewTrustFund = () => {
     startValue: number,
     startUnit: TimeUnit,
     endValue: number,
-    endUnit: TimeUnit
+    endUnit: TimeUnit,
+    baseTimestamp?: number
   ) => {
-    const now = Date.now();
+    const now = baseTimestamp || Date.now();
     const startOffset = getMilliseconds(startValue, startUnit);
     const endOffset = getMilliseconds(endValue, endUnit);
 
@@ -146,15 +160,20 @@ const NewTrustFund = () => {
         data.registrationEndUnit
       );
 
-      const {
-        startTimestamp: allocationStartTimestamp,
-        endTimestamp: allocationEndTimestamp,
-      } = getUnixTimestamps(
+      // Calculate allocation timestamps starting from registration end + 1 second
+      const allocationStartMs = getMilliseconds(
         data.allocationStartValue,
-        data.allocationStartUnit,
+        data.allocationStartUnit
+      );
+      const allocationEndMs = getMilliseconds(
         data.allocationEndValue,
         data.allocationEndUnit
       );
+
+      const allocationStartTimestamp =
+        registrationEndTimestamp + Math.floor(allocationStartMs / 1000);
+      const allocationEndTimestamp =
+        allocationStartTimestamp + Math.floor(allocationEndMs / 1000);
 
       const params = {
         ...data,
@@ -270,7 +289,19 @@ const NewTrustFund = () => {
         </div>
 
         <div className="flex flex-col gap-2">
-          <FormLabel>Registration Time</FormLabel>
+          <FormLabel className="flex items-center gap-2">
+            Registration Time
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>When beneficiaries register</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </FormLabel>
           <div className="flex items-center gap-2">
             <FormField
               control={form.control}
@@ -281,7 +312,7 @@ const NewTrustFund = () => {
                     <Input
                       type="number"
                       min="1"
-                      className="w-20"
+                      className="w-16"
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value))}
                     />
@@ -304,11 +335,13 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
+                        {["seconds", "minutes", "hours", "days", "weeks"].map(
+                          (unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          )
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -316,7 +349,7 @@ const NewTrustFund = () => {
                 </FormItem>
               )}
             />
-            <span>from now, it starts</span>
+            <span className="text-sm font-medium">from now, it starts</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -329,7 +362,7 @@ const NewTrustFund = () => {
                     <Input
                       type="number"
                       min="1"
-                      className="w-20"
+                      className="w-16"
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value))}
                     />
@@ -352,11 +385,13 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
+                        {["seconds", "minutes", "hours", "days", "weeks"].map(
+                          (unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          )
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -364,12 +399,24 @@ const NewTrustFund = () => {
                 </FormItem>
               )}
             />
-            <span>later, it ends</span>
+            <span className="text-sm font-medium">later, it ends</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <FormLabel>Allocation Time</FormLabel>
+          <FormLabel className="flex items-center gap-2">
+            Allocation Time
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>When you set beneficiary funds</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </FormLabel>
           <div className="flex items-center gap-2">
             <FormField
               control={form.control}
@@ -380,7 +427,7 @@ const NewTrustFund = () => {
                     <Input
                       type="number"
                       min="1"
-                      className="w-20"
+                      className="w-16"
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value))}
                     />
@@ -403,11 +450,13 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
+                        {["seconds", "minutes", "hours", "days", "weeks"].map(
+                          (unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          )
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -415,7 +464,9 @@ const NewTrustFund = () => {
                 </FormItem>
               )}
             />
-            <span>from now, it starts</span>
+            <span className="text-sm font-medium">
+              from registration end, it starts
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -428,7 +479,7 @@ const NewTrustFund = () => {
                     <Input
                       type="number"
                       min="1"
-                      className="w-20"
+                      className="w-16"
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value))}
                     />
@@ -451,11 +502,13 @@ const NewTrustFund = () => {
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        {["seconds", "minutes", "hours", "days", "weeks"].map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
+                        {["seconds", "minutes", "hours", "days", "weeks"].map(
+                          (unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          )
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -463,7 +516,7 @@ const NewTrustFund = () => {
                 </FormItem>
               )}
             />
-            <span>later, it ends</span>
+            <span className="text-sm font-medium">later, it ends</span>
           </div>
         </div>
 
