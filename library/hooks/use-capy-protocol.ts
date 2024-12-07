@@ -212,13 +212,19 @@ const useCapyProtocol = () => {
     while (!poolExists) {
       try {
         // Try to read from the pool to verify it exists
-        await readContract(config, {
+        const pool = await readContract(config, {
           abi: ALLO_ABI,
           address: ALLO_ADDRESS,
           functionName: "getPool",
           args: [result],
         });
-        poolExists = true;
+
+        // Verify pool data exists and is valid
+        if (pool.strategy !== zeroAddress) {
+          poolExists = true;
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
       } catch (error) {
         // If error occurs (pool not found yet), wait and retry
         await new Promise((resolve) => setTimeout(resolve, 1000));
