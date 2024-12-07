@@ -1,6 +1,6 @@
 const data = {
   name: "CapyTrustStrategyFactory",
-  address: "0x59c72C23bAfa456E0fFA64F12Afb0e4E74482c9d",
+  address: "0xFA0a0d3d2C8a734dF331Cded3332cCBD97540bdE",
   abi: [
     {
       type: "constructor",
