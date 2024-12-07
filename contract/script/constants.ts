@@ -62,10 +62,10 @@ type FunctionParams = {
   };
 };
 
-export const RPC_URL = "http://127.0.0.1:8545";
+export const RPC_URL = "https://eth-sepolia.g.alchemy.com/v2/vEVKURyIJBdxxahH6eQJOSpjtIe3kA6-";
 
 export const PRIVATE_KEY =
-  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+  "0xc6a242c8c56bd23dc24a8533b058c258c5cfc13bc326a06ef0af9a56b9b342b4";
 
 export const ADMIN_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 export const RECIPIENT_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
@@ -2846,7 +2846,7 @@ export const CONTRACTS = {
     ] as const,
   },
   CAPY_NFT: {
-    address: "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE" as Address,
+    address: "0x26f7A7cB5DcF6c04cE4dA344574fA8aF08ed6c2f" as Address,
     abi: [
       {
         inputs: [
@@ -3425,7 +3425,7 @@ export const CONTRACTS = {
     ] as const,
   },
   CAPY_CORE: {
-    address: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed" as Address,
+    address: "0x3A7F069b2dD19D2B05fAAEA2AAD9a95c83174099" as Address,
     abi: [
       {
         type: "constructor",

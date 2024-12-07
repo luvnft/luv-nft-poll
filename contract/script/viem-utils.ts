@@ -6,6 +6,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { RPC_URL, PRIVATE_KEY } from "./constants.js";
+import { anvil, sepolia } from "wagmi/chains";
 
 export const ethenaTestnet = defineChain({
   id: 31337, //52085143,
@@ -23,7 +24,7 @@ export const ethenaTestnet = defineChain({
 });
 
 export const publicClient = createPublicClient({
-  chain: ethenaTestnet,
+  chain: sepolia,
   transport: http(RPC_URL),
 });
 
@@ -31,6 +32,6 @@ export const account = privateKeyToAccount(PRIVATE_KEY);
 
 export const walletClient = createWalletClient({
   account,
-  chain: ethenaTestnet,
+  chain: sepolia,
   transport: http(RPC_URL),
 });
