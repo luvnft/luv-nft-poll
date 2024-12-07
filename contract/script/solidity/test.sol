@@ -12,23 +12,17 @@ contract MyScript is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        // Contract addresses
-        address routerAddress = 0x8107cFe5eCa96972eFf1DF00A4d43e45559F226c;
-        address usdeAddress = 0xf805ce4F96e0EdD6f0b6cd4be22B34b92373d696;
+        // Get existing router contract
+        CapyUSDeStakeRouter router = CapyUSDeStakeRouter(0x8107cFe5eCa96972eFf1DF00A4d43e45559F226c); // Replace with actual router address
 
-        // Get contract instances
-        CapyUSDeStakeRouter router = CapyUSDeStakeRouter(routerAddress);
-        IERC20 usde = IERC20(usdeAddress);
-
-        // Amount to fund (1 USDe)
-        uint256 amount = 1 * 1e18;
-        uint256 poolId = 2;
+        // Get USDe token contract
+        IERC20 usde = IERC20(0xf805ce4F96e0EdD6f0b6cd4be22B34b92373d696);
 
         // Approve router to spend USDe
-        usde.approve(routerAddress, amount);
+        usde.approve(address(router), 1 ether);
 
-        // Fund pool through router
-        router.fundAlloPool(poolId, amount);
+        // Fund pool with 1 USDe
+        router.fundAlloPool(9, 1 ether);
 
         vm.stopBroadcast();
     }
