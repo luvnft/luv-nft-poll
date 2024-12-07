@@ -62,8 +62,6 @@ const Fund = () => {
   const { beneficiaries, strategy, participants, isLoading, error } =
     useFundData(fund);
 
-  console.log(participants);
-
   // State for tracking changes in participant statuses and allocations
   const [participantChanges, setParticipantChanges] = React.useState<{
     [address: string]: {
@@ -222,7 +220,14 @@ const Fund = () => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
-        {error.message}
+        {error?.message}
+      </div>
+    );
+  }
+  if (!strategy?.strategyAddress) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 mt-32">
+        Trust fund does not exist yet
       </div>
     );
   }
