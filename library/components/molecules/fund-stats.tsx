@@ -10,6 +10,10 @@ import { Strategy } from "@/hooks/use-fund-data";
 import { ellipsisAddress } from "@/utils";
 
 const FundStats = ({ data }: { data?: Strategy }) => {
+  if (!data) {
+    return null;
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
       <Card>
@@ -17,10 +21,10 @@ const FundStats = ({ data }: { data?: Strategy }) => {
           <CardTitle className="text-sm font-medium">Trust Contract</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{ellipsisAddress(data?.strategyAddress!)}</div>
+          <div className="text-2xl font-bold">{ellipsisAddress(data.strategyAddress)}</div>
           <p className="text-xs text-muted-foreground">
             Deployed{" "}
-            {formatDistanceToNow(new Date(data?.blockTimestamp! * 1000), {
+            {formatDistanceToNow(new Date(data.blockTimestamp * 1000), {
               addSuffix: true,
             })}
           </p>
@@ -31,7 +35,7 @@ const FundStats = ({ data }: { data?: Strategy }) => {
           <CardTitle className="text-sm font-medium">Pool Size</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center text-2xl font-bold">{Number(data?.poolSize).toFixed(3)}&nbsp;<span className="text-lg font-medium">sUSDe</span></div>
+          <div className="flex items-center text-2xl font-bold">{Number(data.poolSize).toFixed(3)}&nbsp;<span className="text-lg font-medium">sUSDe</span></div>
           <p className="text-xs text-muted-foreground">+0% from last month</p>
         </CardContent>
       </Card>
