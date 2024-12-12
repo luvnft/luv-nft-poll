@@ -134,7 +134,7 @@ const CollectPageWithSuspense = () => {
               />
               <button
                 onClick={handleScan}
-                className="bg-green-500 rounded-lg h-[50px] px-4 flex items-center gap-5"
+                className="bg-green-500 rounded-[14px] h-[50px] px-4 flex items-center gap-5"
                 disabled={!walletAddress}
               >
                 Scan

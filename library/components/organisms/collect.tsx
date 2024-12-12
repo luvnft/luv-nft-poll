@@ -144,7 +144,7 @@ const CollectBody = ({ stream }: { stream: GroupedStream }) => {
 
           <Button
             className={cn(
-              "bg-green-500 hover:bg-green-400 w-fit flex gap-20 h-[50px] px-4"
+              "bg-green-500 hover:bg-green-400 w-fit flex gap-20 h-[50px] px-4 rounded-[14px]"
             )}
             onClick={handleReceiveAndCollect}
             disabled={isCollecting || !optimalReceivableAmount}

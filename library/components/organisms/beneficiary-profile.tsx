@@ -109,7 +109,7 @@ const BeneficiaryProfile = ({ data }: { data: Beneficiary }) => {
         <div className="flex justify-end">
           <DialogTrigger asChild>{trigger}</DialogTrigger>
         </div>
-        <DialogContent className="sm:max-w-[425px] bg-white sm:rounded-2xl rounded-2xl">
+        <DialogContent className="sm:max-w-[425px] sm:rounded-2xl rounded-2xl bg-gradient-to-br from-green-50 to-white">
           <DialogHeader>
             <DialogTitle>Beneficiary</DialogTitle>
           </DialogHeader>

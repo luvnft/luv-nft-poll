@@ -6,9 +6,9 @@ import TrustTriangleExamples from "@/components/organisms/trust-triangle-example
 
 const Home = () => {
   return (
-    <div className=" py-10 px-4 md:px-24 flex flex-col gap-24">
+    <div className=" py-10 px-4 md:px-24 flex flex-col gap-24 overflow-hidden">
       {/* hero section */}
-      <div className=" flex flex-col gap-[70px]">
+      <div className=" flex flex-col gap-[70px] relative ">
         <header className=" flex justify-between items-center">
           <div className=" flex items-end">
             <Image
@@ -31,6 +31,7 @@ const Home = () => {
             </button>
           </Link>
         </header>
+        <div className="absolute inset-0  h-[400px] w-[400px] bg-green-400 opacity-70  -z-10 top-[150px] blur-[200px] left-[100px] rounded-full" />
 
         <div className="flex flex-col md:flex-row  justify-between gap-10">
           <div className="md:w-1/2 order-1 md:order-2">
@@ -66,9 +67,11 @@ const Home = () => {
       </div>
 
       {/* problem section */}
-      <div className="min-h-screen flex flex-col md:flex-row border-y mx-[-16px] md:mx-[-96px] px-4 md:px-24 py-4 ">
+      <div className=" flex flex-col md:flex-row border-y mx-[-16px] md:mx-[-96px] px-4 md:px-24 py-4 relative">
+                <div className="absolute  h-[400px] w-[400px] bg-yellow-300 opacity-70  -z-10 bottom-0 blur-[200px] left-1/2 rounded-full" />
+
         {/* Problem Statement */}
-        <div className=" md:sticky md:top-20 md:pt-40 md:h-screen md:w-1/2 ">
+        <div className=" md:sticky md:top-20 md:pt-40 md:w-1/2 ">
           <h1 className="text-3xl md:text-6xl font-medium">
             Problem <br className="hidden md:block"></br> Statement
           </h1>
