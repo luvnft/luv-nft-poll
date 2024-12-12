@@ -37,3 +37,19 @@ We are not just moving money - we are building trust networks that connect those
 
 ## Subgraph
 [Repository](https://github.com/kelvinpraises/capyflow-subgraph)
+
+
+## Platform demo
+
+1. **Sample Trust View**
+   - Visit our [Ethena Trust demo](https://capyflow.vercel.app/trust/0x83bfa0f73cb4a7ee30df7f07342c40b00a28f0fb)
+   - See how a trust works with a registered beneficiary
+   - Explore trust details, conditions and milestones
+
+2. **Beneficiary Streams**
+   - Check out the [Collectibles Dashboard](https://capyflow.vercel.app/collectables)
+   - View sample beneficiary streams by searching:
+     ```
+     0xb754369b3a7c430d7e94c14f33c097c398a0caa5
+     ```
+   - See real-time stream balances and activity
