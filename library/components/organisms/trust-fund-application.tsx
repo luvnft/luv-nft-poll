@@ -35,6 +35,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useAccount } from "wagmi";
 import { Label } from "@/components/atoms/label";
 import { Textarea } from "@/components/atoms/text-area";
+import { Plus } from "lucide-react";
 
 const FormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -163,7 +164,13 @@ const TrustFundApplication = ({ poolId }: { poolId: bigint }) => {
       <Dialog open={open} onOpenChange={setOpen}>
         <div className="flex justify-end">
           <DialogTrigger asChild>
-            <Button>Apply to Trust</Button>
+          <button className="bg-[#33CB82] hover:bg-[#33CB82]/80 rounded-[14px] h-[50px] px-4 flex items-center gap-5">
+          Apply to Trust
+          <div className="w-7 h-7 rounded-full bg-[#191A23] flex justify-center items-center">
+            <Plus strokeWidth={3} width={16} className=" text-green-500 " />
+          </div>
+        </button>
+            {/* <Button></Button> */}
           </DialogTrigger>
         </div>
         <DialogContent className="flex flex-col gap-2 sm:max-w-[425px] bg-white sm:rounded-2xl rounded-2xl">
