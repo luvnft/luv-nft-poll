@@ -32,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import { defineStepper } from "@stepperize/react";
 import { Button } from "@/components/atoms/button";
 import useCapyProtocol from "@/hooks/use-capy-protocol";
+import { Separator } from "@/components/atoms/separator";
 
 const { useStepper } = defineStepper(
   {
@@ -233,49 +234,34 @@ const Fund = () => {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6">
-      <div className="flex gap-2">
-        <Avatar>
-          <AvatarImage
-            src={
-              isValidUrl(strategy?.avatar ?? "")
-                ? strategy?.avatar
-                : `https://avatar.vercel.sh/${
-                    (strategy?.strategyAddress ?? "") + (strategy?.name ?? "")
-                  }`
-            }
-            alt={`${strategy?.name ?? "Trust Fund"} logo`}
-          />
-          <AvatarFallback>{getInitials(strategy?.name ?? "")}</AvatarFallback>
-        </Avatar>
-        <h2 className="text-3xl font-bold tracking-tight">
-          {strategy?.name || `Trust ${ellipsisAddress(fund)}`}
-        </h2>
-      </div>
-
-      <Tabs defaultValue="overview" className="space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="participants">Participants</TabsTrigger>
-            <TabsTrigger value="notifications" disabled>
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="settings" disabled>
-              Settings
-            </TabsTrigger>
-          </TabsList>
-          <div className="flex items-center space-x-2">
-            {strategy?.poolId && (
-              <NewTrustFundApplication poolId={strategy?.poolId} />
-            )}
+    <div className="flex-1 space-y-4  p-6">
+      <div className=" flex gap-6 flex-col md:flex-row">
+        <div className=" flex flex-col w-2/5 gap-6">
+          <div className="flex gap-2">
+            <Avatar>
+              <AvatarImage
+                src={
+                  isValidUrl(strategy?.avatar ?? "")
+                    ? strategy?.avatar
+                    : `https://avatar.vercel.sh/${
+                        (strategy?.strategyAddress ?? "") +
+                        (strategy?.name ?? "")
+                      }`
+                }
+                alt={`${strategy?.name ?? "Trust Fund"} logo`}
+              />
+              <AvatarFallback>
+                {getInitials(strategy?.name ?? "")}
+              </AvatarFallback>
+            </Avatar>
+            <h2 className="text-3xl font-bold tracking-tight">
+              {strategy?.name || `Trust ${ellipsisAddress(fund)}`}
+            </h2>
           </div>
-        </div>
-
-        <TabsContent value="overview" className="space-y-4">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">Overview</h2>
-            {strategy?.description || <p>This is trust fund {fund}.</p>}
+          <div className=" ">
+            {strategy?.description || (
+              <p className=" text-gray-800">This is trust fund {fund}.</p>
+            )}
             {!isRegistrationOpen && strategy?.registrationEndTime && (
               <p className="text-sm text-gray-500 mt-2">
                 Registration closed{" "}
@@ -316,126 +302,161 @@ const Fund = () => {
           </div>
 
           <FundStats data={strategy} />
-
-          <h3 className="text-lg font-bold tracking-tight">Beneficiaries</h3>
-
-          <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-            {beneficiaries.length > 0 ? (
-              beneficiaries.map((beneficiary) => (
-                <Beneficiary key={beneficiary.address} data={beneficiary} />
-              ))
-            ) : (
-              <div className="col-span-full text-center text-gray-500">
-                No beneficiaries found
-              </div>
+          <div className="flex items-center space-x-2">
+            {strategy?.poolId && (
+              <NewTrustFundApplication poolId={strategy?.poolId} />
             )}
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="participants" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold tracking-tight">Participants</h2>
-            {hasChanges && (
-              <Button onClick={handleSaveChanges} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            )}
-            {stepper.current.id === "distribution" && (
-              <Button
-                onClick={handleDistribution}
-                disabled={
-                  isDistributing || distributionParticipants.length === 0
-                }
+        <div className=" w-1 hidden md:block">
+          <Separator orientation="vertical" className="" />
+        </div>
+
+        <Tabs defaultValue="beneficiary" className=" space-y-4 w-3/5">
+          <div className="flex border-b ">
+            <TabsList className=" bg-white">
+              <TabsTrigger
+                value="beneficiary"
+                className=" data-[state=active]:border-b-2 data-[state=active]:border-green-300 rounded-none  data-[state=active]:shadow-none text-lg"
               >
-                {isDistributing
-                  ? "Distributing..."
-                  : "Distribute (streams for 3 minutes)"}
-              </Button>
-            )}
+                Beneficiaries
+              </TabsTrigger>
+              <TabsTrigger
+                value="participants"
+                className=" data-[state=active]:border-b-2 data-[state=active]:border-green-300 rounded-none  data-[state=active]:shadow-none text-lg"
+              >
+                Participants
+              </TabsTrigger>
+            </TabsList>
           </div>
 
-          {isAdmin && (
-            <nav aria-label="Fund Steps" className="group my-4">
-              <ol
-                className="flex items-center justify-between gap-2"
-                aria-orientation="horizontal"
-              >
-                {stepper.all.map((step, index, array) => {
-                  const isLocked =
-                    (step.id === "allocation" &&
-                      currentTime <
-                        (strategy?.allocationStartTime ?? BigInt(0))) ||
-                    (step.id === "distribution" &&
-                      currentTime <=
-                        (strategy?.allocationEndTime ?? BigInt(0)));
+          <TabsContent value="beneficiary" className="space-y-4">
+            <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+              {beneficiaries.length > 0 ? (
+                beneficiaries.map((beneficiary) => (
+                  <Beneficiary key={beneficiary.address} data={beneficiary} />
+                ))
+              ) : (
+                <div className="col-span-full text-center text-gray-500">
+                  No beneficiaries found
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
-                  return (
-                    <React.Fragment key={step.id}>
-                      <li className="flex items-center gap-4 flex-shrink-0">
-                        <button
-                          type="button"
-                          disabled={isLocked}
-                          className={`relative flex size-10 items-center justify-center rounded-full ${
-                            isLocked
-                              ? "bg-gray-200 cursor-not-allowed"
-                              : index <= stepper.current.index
-                              ? "bg-primary text-white"
-                              : "bg-secondary"
-                          }`}
-                          aria-current={
-                            stepper.current.id === step.id ? "step" : undefined
-                          }
-                          onClick={() => !isLocked && stepper.goTo(step.id)}
-                        >
-                          {isLocked ? <Lock className="w-4 h-4" /> : index + 1}
-                        </button>
-                        <span className="text-sm font-medium">
-                          {step.title}
-                        </span>
-                      </li>
-                      {index < array.length - 1 && (
-                        <div
-                          className={`flex-1 h-0.5 ${
-                            index < stepper.current.index
-                              ? "bg-primary"
-                              : "bg-muted"
-                          }`}
-                        />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </ol>
-            </nav>
-          )}
-
-          <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-            {getFilteredParticipants(stepper.current.id).length > 0 ? (
-              getFilteredParticipants(stepper.current.id).map((participant) => (
-                <ParticipantProfile
-                  key={participant.address}
-                  data={{
-                    ...participant,
-                    strategyAddress: strategy?.strategyAddress!,
-                  }}
-                  isAdmin={isAdmin}
-                  step={isAdmin ? stepper.current.id : undefined}
-                  onStatusChange={handleStatusChange}
-                  onAllocationChange={handleAllocationChange}
-                  status={participantChanges[participant.address]?.status}
-                  allocation={
-                    participantChanges[participant.address]?.allocation
+          <TabsContent value="participants" className="space-y-4">
+            <div className="flex items-center justify-between">
+              {hasChanges && (
+                <Button onClick={handleSaveChanges} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </Button>
+              )}
+              {stepper.current.id === "distribution" && (
+                <Button
+                  onClick={handleDistribution}
+                  disabled={
+                    isDistributing || distributionParticipants.length === 0
                   }
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center text-gray-500">
-                No participants found
-              </div>
+                >
+                  {isDistributing
+                    ? "Distributing..."
+                    : "Distribute (streams for 3 minutes)"}
+                </Button>
+              )}
+            </div>
+
+            {isAdmin && (
+              <nav aria-label="Fund Steps" className="group my-4">
+                <ol
+                  className="flex items-center justify-between gap-2"
+                  aria-orientation="horizontal"
+                >
+                  {stepper.all.map((step, index, array) => {
+                    const isLocked =
+                      (step.id === "allocation" &&
+                        currentTime <
+                          (strategy?.allocationStartTime ?? BigInt(0))) ||
+                      (step.id === "distribution" &&
+                        currentTime <=
+                          (strategy?.allocationEndTime ?? BigInt(0)));
+
+                    return (
+                      <React.Fragment key={step.id}>
+                        <li className="flex items-center gap-4 flex-shrink-0">
+                          <button
+                            type="button"
+                            disabled={isLocked}
+                            className={`relative flex size-10 items-center justify-center rounded-full ${
+                              isLocked
+                                ? "bg-gray-200 cursor-not-allowed"
+                                : index <= stepper.current.index
+                                ? "bg-primary text-white"
+                                : "bg-secondary"
+                            }`}
+                            aria-current={
+                              stepper.current.id === step.id
+                                ? "step"
+                                : undefined
+                            }
+                            onClick={() => !isLocked && stepper.goTo(step.id)}
+                          >
+                            {isLocked ? (
+                              <Lock className="w-4 h-4" />
+                            ) : (
+                              index + 1
+                            )}
+                          </button>
+                          <span className="text-sm font-medium">
+                            {step.title}
+                          </span>
+                        </li>
+                        {index < array.length - 1 && (
+                          <div
+                            className={`flex-1 h-0.5 ${
+                              index < stepper.current.index
+                                ? "bg-primary"
+                                : "bg-muted"
+                            }`}
+                          />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </ol>
+              </nav>
             )}
-          </div>
-        </TabsContent>
-      </Tabs>
+
+            <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+              {getFilteredParticipants(stepper.current.id).length > 0 ? (
+                getFilteredParticipants(stepper.current.id).map(
+                  (participant) => (
+                    <ParticipantProfile
+                      key={participant.address}
+                      data={{
+                        ...participant,
+                        strategyAddress: strategy?.strategyAddress!,
+                      }}
+                      isAdmin={isAdmin}
+                      step={isAdmin ? stepper.current.id : undefined}
+                      onStatusChange={handleStatusChange}
+                      onAllocationChange={handleAllocationChange}
+                      status={participantChanges[participant.address]?.status}
+                      allocation={
+                        participantChanges[participant.address]?.allocation
+                      }
+                    />
+                  )
+                )
+              ) : (
+                <div className="col-span-full text-center text-gray-500">
+                  No participants found
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
