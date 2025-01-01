@@ -532,7 +532,7 @@ const NewTrustFund = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <div className="flex justify-end">
           <DialogTrigger asChild>
-            <Button>New Trust Fund</Button>
+            <Button>Create New Poll</Button>
           </DialogTrigger>
         </div>
         <DialogContent
@@ -540,7 +540,7 @@ const NewTrustFund = () => {
           className="flex flex-col gap-2 sm:max-w-[425px] bg-white sm:rounded-2xl rounded-2xl"
         >
           <DialogHeader>
-            <DialogTitle>Create New Trust Fund</DialogTitle>
+            <DialogTitle>Create New Poll</DialogTitle>
           </DialogHeader>
           {content}
         </DialogContent>
@@ -551,12 +551,12 @@ const NewTrustFund = () => {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button>New Trust Fund</Button>
+        <Button>Create New Poll</Button>
       </DrawerTrigger>
       <DrawerContent ref={emojiPickerContainerRef}>
         <DrawerHeader className="text-left">
           <DrawerTitle className="text-2xl font-bold text-center mb-6">
-            Create New Trust Fund
+            Create New Poll
           </DrawerTitle>
         </DrawerHeader>
         {content}

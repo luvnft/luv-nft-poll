@@ -16,10 +16,8 @@ import { TrustFund } from "@/hooks/use-trust-data";
 const ActiveFunds = ({ data }: { data: TrustFund[] }) => (
   <Card className="col-span-4 min-h-[100vh] md:min-h-min">
     <CardHeader>
-      <CardTitle>Active Trust Funds</CardTitle>
-      <CardDescription>
-        Your 5 most recent active fundings.
-      </CardDescription>
+      <CardTitle>Your Recent Polls </CardTitle>
+      <CardDescription>Your 5 most recent active fundings.</CardDescription>
     </CardHeader>
     <CardContent>
       <div className="flex gap-3 flex-col">

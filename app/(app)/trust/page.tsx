@@ -61,13 +61,13 @@ const TrustPage = () => {
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6">
-      <h2 className="text-3xl font-bold tracking-tight">Trust Dashboard</h2>
+      <h2 className="text-3xl font-bold tracking-tight">Polls Dashboard</h2>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <div className="flex items-center justify-between gap-2">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="trusts">Trusts</TabsTrigger>
+            <TabsTrigger value="polls">Polls</TabsTrigger>
             <TabsTrigger value="notifications" disabled>
               Notifications
             </TabsTrigger>
@@ -93,8 +93,8 @@ const TrustPage = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="trusts" className="space-y-4">
-          <h2 className="text-xl font-bold tracking-tight">Trust Funds</h2>
+        <TabsContent value="polls" className="space-y-4">
+          <h2 className="text-xl font-bold tracking-tight">All Polls</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
             {activeFunds.map((fund) => (
               <FundLink

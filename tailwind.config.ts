@@ -23,6 +23,7 @@ const config: Config = {
         sans: ["var(--font-sans)", ...fontFamily.sans],
         outfit: ["var(--font-outfit)"],
         atyp: ["var(--font-atyp)"],
+        mouse: ["Mouse Memoirs", "serif"]
       },
       colors: {
         border: "hsl(var(--border))",

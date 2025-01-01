@@ -33,6 +33,9 @@ import { defineStepper } from "@stepperize/react";
 import { Button } from "@/components/atoms/button";
 import useCapyProtocol from "@/hooks/use-capy-protocol";
 import { Separator } from "@/components/atoms/separator";
+import { YesNoChart } from "@/components/organisms/yes-no-chart";
+import { Input } from "@/components/atoms/input";
+import { RadialChart } from "@/components/organisms/radial-chart";
 
 const { useStepper } = defineStepper(
   {
@@ -51,6 +54,36 @@ const { useStepper } = defineStepper(
     description: "Distribute funds",
   }
 );
+
+const recentActivity = [
+  {
+    id: "1",
+    user: "Marcelo",
+    action: "staked",
+    choice: "Yes",
+    amount: 77.11,
+    timestamp: new Date(),
+    teamLogo: "https://picsum.photos/200/200?random=101",
+  },
+  {
+    id: "2",
+    user: "hYlQDLDfDXFuWhNT",
+    action: "staked",
+    choice: "No",
+    amount: 48.79,
+    timestamp: new Date(),
+    teamLogo: "https://picsum.photos/200/200?random=200",
+  },
+  {
+    id: "3",
+    user: "AidanAdelynn",
+    action: "staked",
+    choice: "No",
+    amount: 20.0,
+    timestamp: new Date(),
+    teamLogo: "https://picsum.photos/200/200?random=300",
+  },
+];
 
 const Fund = () => {
   const params = useParams();
@@ -81,134 +114,6 @@ const Fund = () => {
     currentTime >= strategy.registrationStartTime &&
     currentTime <= strategy.registrationEndTime;
 
-  const isAllocationOpen =
-    strategy?.allocationStartTime &&
-    strategy?.allocationEndTime &&
-    currentTime >= strategy.allocationStartTime &&
-    currentTime <= strategy.allocationEndTime;
-
-  const isDistributionOpen =
-    strategy?.allocationEndTime && currentTime > strategy.allocationEndTime;
-
-  const getFilteredParticipants = (step: string) => {
-    switch (step) {
-      case "registration":
-        return participants;
-      case "allocation":
-        return participants.filter((p) => p.status === "Accepted");
-      case "distribution":
-        return participants.filter(
-          (p) => parseInt(p.allocation) > 0 && p.status === "Accepted"
-        );
-      default:
-        return participants;
-    }
-  };
-
-  // Check if there are any unsaved changes
-  const hasChanges = Object.keys(participantChanges).length > 0;
-
-  // Handle status change for a participant
-  const handleStatusChange = (
-    address: Address,
-    status: Participant["status"]
-  ) => {
-    setParticipantChanges((prev) => ({
-      ...prev,
-      [address]: { ...prev[address], status },
-    }));
-  };
-
-  // Handle allocation change for a participant
-  const handleAllocationChange = (address: Address, allocation: string) => {
-    setParticipantChanges((prev) => ({
-      ...prev,
-      [address]: { ...prev[address], allocation },
-    }));
-  };
-
-  // Save all changes based on current step
-  const handleSaveChanges = async () => {
-    setIsSaving(true);
-    try {
-      const statusMap = {
-        None: 0,
-        Pending: 1,
-        Accepted: 2,
-        Rejected: 3,
-        Appealed: 4,
-        InReview: 5,
-        Canceled: 6,
-      };
-
-      if (stepper.current.id === "registration") {
-        const statusChanges = Object.entries(participantChanges)
-          .filter(([_, changes]) => changes.status)
-          .map(([address, changes]) => ({
-            status: statusMap[changes.status!], // Add ! since we filtered for status existing
-            strategyAddress: strategy?.strategyAddress!,
-            recipientId: address as Address,
-          }));
-
-        // Process status changes sequentially
-        for (const change of statusChanges) {
-          await updateRecipientStatus(change);
-        }
-      } else if (stepper.current.id === "allocation") {
-        // Get addresses and allocations from participant changes
-        const allocationChanges = Object.entries(participantChanges)
-          .filter(
-            ([_, changes]) => changes.allocation && changes.allocation !== "0"
-          )
-          .reduce(
-            (acc, [address, changes]) => {
-              acc.addresses.push(address as Address);
-              acc.amounts.push(parseEther(changes.allocation!));
-              return acc;
-            },
-            { addresses: [] as Address[], amounts: [] as bigint[] }
-          );
-
-        // Encode parameters for allocation
-        const data = encodeAbiParameters(
-          parseAbiParameters("address[], uint256[]"),
-          [allocationChanges.addresses, allocationChanges.amounts]
-        );
-
-        strategy?.poolId &&
-          (await allocate({ poolId: strategy?.poolId, data }));
-      }
-
-      // Clear changes after successful save
-      setParticipantChanges({});
-      toast.success("Changes saved successfully");
-    } catch (error) {
-      console.error("Failed to save changes:", error);
-      toast.error(
-        `Failed to save: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const distributionParticipants = getFilteredParticipants("distribution").map(
-    (participant) => participant.address as Address
-  );
-  const handleDistribution = async () => {
-    const data = encodeAbiParameters(
-      parseAbiParameters("uint32"),
-      [180] // 3 minutes in seconds
-    );
-    await distribute({
-      poolId: strategy?.poolId!,
-      recipientIds: distributionParticipants,
-      data,
-    });
-  };
-
   if (!isMounted) return null;
   if (isLoading) {
     return (
@@ -235,8 +140,8 @@ const Fund = () => {
 
   return (
     <div className="flex-1 space-y-4  p-6">
-      <div className=" flex gap-6 flex-col md:flex-row">
-        <div className=" flex flex-col w-2/5 gap-6">
+      <div className=" flex md:gap-6 flex-col md:flex-row">
+        <div className=" flex flex-col md:w-2/5 gap-6">
           <div className="flex gap-2">
             <Avatar>
               <AvatarImage
@@ -254,14 +159,22 @@ const Fund = () => {
                 {getInitials(strategy?.name ?? "")}
               </AvatarFallback>
             </Avatar>
-            <h2 className="text-3xl font-bold tracking-tight">
+            {/* <h2 className="text-3xl font-bold tracking-tight">
               {strategy?.name || `Trust ${ellipsisAddress(fund)}`}
-            </h2>
+            </h2> */}
+            <h2 className="text-3xl font-bold tracking-tight">
+            Will Ethena will become the top DeFi protocol by TVL in Q1 2025?            </h2>
           </div>
           <div className=" ">
-            {strategy?.description || (
+            {/* {strategy?.description || (
               <p className=" text-gray-800">This is trust fund {fund}.</p>
-            )}
+            )} */}
+            <p className=" text-gray-800">
+              Ethena must rank as the top DeFi protocol by TVL on DeFiLlama for
+              at least 7 consecutive days in Q1 2025, with TVL measured in USD
+              from genuine user deposits; disqualifications include hacks over
+              $10M, prolonged pauses, or TVL manipulation.
+            </p>
             {!isRegistrationOpen && strategy?.registrationEndTime && (
               <p className="text-sm text-gray-500 mt-2">
                 Registration closed{" "}
@@ -302,37 +215,50 @@ const Fund = () => {
           </div>
 
           <FundStats data={strategy} />
-          <div className="flex items-center space-x-2">
+          {/* <div className="flex items-center space-x-2">
             {strategy?.poolId && (
               <NewTrustFundApplication poolId={strategy?.poolId} />
             )}
-          </div>
+          </div> */}
         </div>
 
         <div className=" w-1 hidden md:block">
           <Separator orientation="vertical" className="" />
         </div>
 
-        <Tabs defaultValue="beneficiary" className=" space-y-4 w-3/5">
+        <Tabs defaultValue="polls" className=" space-y-4 md:w-3/5 pt-6 md:pt-0">
           <div className="flex border-b ">
             <TabsList className=" bg-white">
               <TabsTrigger
-                value="beneficiary"
+                value="polls"
                 className=" data-[state=active]:border-b-2 data-[state=active]:border-green-300 rounded-none  data-[state=active]:shadow-none text-lg"
               >
-                Beneficiaries
+                Market
               </TabsTrigger>
               <TabsTrigger
-                value="participants"
+                value="activities"
                 className=" data-[state=active]:border-b-2 data-[state=active]:border-green-300 rounded-none  data-[state=active]:shadow-none text-lg"
               >
-                Participants
+                Activities
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="beneficiary" className="space-y-4">
-            <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+          <TabsContent value="polls" className="space-y-4">
+            <YesNoChart />
+            <div className=" flex gap-5 pt-5">
+              <Input placeholder="Enter stake amount (USDe)" className="h-12" />
+              <RadialChart />
+            </div>
+            <div className=" flex  gap-8 ">
+              <Button className="w-full h-12 bg-green-500 hover:bg-green-400">
+                Stake YES
+              </Button>
+              <Button className="w-full h-12 bg-red-500 hover:bg-red-400">
+                Stake NO
+              </Button>
+            </div>
+            {/* <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
               {beneficiaries.length > 0 ? (
                 beneficiaries.map((beneficiary) => (
                   <Beneficiary key={beneficiary.address} data={beneficiary} />
@@ -342,117 +268,42 @@ const Fund = () => {
                   No beneficiaries found
                 </div>
               )}
-            </div>
+            </div> */}
           </TabsContent>
 
-          <TabsContent value="participants" className="space-y-4">
-            <div className="flex items-center justify-between">
-              {hasChanges && (
-                <Button onClick={handleSaveChanges} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              )}
-              {stepper.current.id === "distribution" && (
-                <Button
-                  onClick={handleDistribution}
-                  disabled={
-                    isDistributing || distributionParticipants.length === 0
-                  }
+          <TabsContent value="activities" className="space-y-4">
+            <div className="space-y-8">
+              {recentActivity.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 justify-between"
                 >
-                  {isDistributing
-                    ? "Distributing..."
-                    : "Distribute (streams for 3 minutes)"}
-                </Button>
-              )}
-            </div>
-
-            {isAdmin && (
-              <nav aria-label="Fund Steps" className="group my-4">
-                <ol
-                  className="flex items-center justify-between gap-2"
-                  aria-orientation="horizontal"
-                >
-                  {stepper.all.map((step, index, array) => {
-                    const isLocked =
-                      (step.id === "allocation" &&
-                        currentTime <
-                          (strategy?.allocationStartTime ?? BigInt(0))) ||
-                      (step.id === "distribution" &&
-                        currentTime <=
-                          (strategy?.allocationEndTime ?? BigInt(0)));
-
-                    return (
-                      <React.Fragment key={step.id}>
-                        <li className="flex items-center gap-4 flex-shrink-0">
-                          <button
-                            type="button"
-                            disabled={isLocked}
-                            className={`relative flex size-10 items-center justify-center rounded-full ${
-                              isLocked
-                                ? "bg-gray-200 cursor-not-allowed"
-                                : index <= stepper.current.index
-                                ? "bg-primary text-white"
-                                : "bg-secondary"
-                            }`}
-                            aria-current={
-                              stepper.current.id === step.id
-                                ? "step"
-                                : undefined
-                            }
-                            onClick={() => !isLocked && stepper.goTo(step.id)}
-                          >
-                            {isLocked ? (
-                              <Lock className="w-4 h-4" />
-                            ) : (
-                              index + 1
-                            )}
-                          </button>
-                          <span className="text-sm font-medium">
-                            {step.title}
-                          </span>
-                        </li>
-                        {index < array.length - 1 && (
-                          <div
-                            className={`flex-1 h-0.5 ${
-                              index < stepper.current.index
-                                ? "bg-primary"
-                                : "bg-muted"
-                            }`}
-                          />
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </ol>
-              </nav>
-            )}
-
-            <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-              {getFilteredParticipants(stepper.current.id).length > 0 ? (
-                getFilteredParticipants(stepper.current.id).map(
-                  (participant) => (
-                    <ParticipantProfile
-                      key={participant.address}
-                      data={{
-                        ...participant,
-                        strategyAddress: strategy?.strategyAddress!,
-                      }}
-                      isAdmin={isAdmin}
-                      step={isAdmin ? stepper.current.id : undefined}
-                      onStatusChange={handleStatusChange}
-                      onAllocationChange={handleAllocationChange}
-                      status={participantChanges[participant.address]?.status}
-                      allocation={
-                        participantChanges[participant.address]?.allocation
-                      }
-                    />
-                  )
-                )
-              ) : (
-                <div className="col-span-full text-center text-gray-500">
-                  No participants found
+                  <img
+                    src={item.teamLogo}
+                    alt=""
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm">
+                      <span className="font-medium">{item.user}</span>{" "}
+                      {item.action}{" "}
+                      <span
+                        className={
+                          item.choice === "Yes"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {item.choice}
+                      </span>{" "}
+                      at (${item.amount})
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {formatDistanceToNow(item.timestamp, { addSuffix: true })}
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
           </TabsContent>
         </Tabs>
