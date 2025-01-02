@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Loader } from "lucide-react";
+import { ArrowUpRight, Check, Loader } from "lucide-react";
 import { useParams } from "next/navigation";
 import {
   Address,
@@ -296,23 +296,28 @@ const Fund = () => {
                   </div>
                   <p className=" text-gray-800 text-lg pt-2">
                     For {winner} voters, your tokens retain their full
-                    value—boosted by the interest yield from everyone&apos;s stakes.
-                    Hold or trade your {winner} tokens as you like. You can also
-                    withdraw your USDE stake anytime. <br />
+                    value—boosted by the interest yield from everyone&apos;s
+                    stakes. Hold or trade your {winner} tokens as you like. You
+                    can also withdraw your USDE stake anytime. <br />
                     For {(winner as YesNo) === "Yes" ? " No" : " Yes"} voters,
                     prepare for the double-blitz with 500x inflation in 24 hours
-                    and another 500x in 48 hours. Withdraw your USDE stake—it&apos;s
-                    no-loss, and your
+                    and another 500x in 48 hours. Withdraw your USDE
+                    stake—it&apos;s no-loss, and your
                     {(winner as YesNo) === "Yes" ? " No" : " Yes"} tokens are
                     now purely for entertainment!{" "}
                   </p>
                 </div>
                 <div className=" flex justify-end">
-
-                <Button className=" bg-white text-gray-800 border hover:scale-105 hover:bg-white transition-all duration-300 text-xl h-12 shadow-none border-gray-300">
-                  {" "}
-                  Withdraw Funds
-                </Button>
+                  <button className="bg-[#33CB82] hover:bg-[#33CB82]/80 rounded-[14px] h-[50px] px-4 flex items-center gap-5">
+                    Withdraw Funds
+                    <div className="w-7 h-7 rounded-full bg-[#191A23] flex justify-center items-center">
+                      <ArrowUpRight
+                        strokeWidth={3}
+                        width={16}
+                        className=" text-green-500 "
+                      />
+                    </div>
+                  </button>
                 </div>
               </div>
             )}

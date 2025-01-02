@@ -14,7 +14,6 @@ import FundLink from "@/components/molecules/fund-links";
 import RecentActions from "@/components/molecules/recent-actions";
 import TrustStats from "@/components/molecules/trust-stats";
 import NewTrustFund from "@/components/organisms/new-trust-fund";
-import Registrar from "@/components/organisms/registrar";
 import { useMounted } from "@/hooks/use-mounted";
 import useTrustData from "@/hooks/use-trust-data";
 import useStore from "@/store";
@@ -54,9 +53,6 @@ const TrustPage = () => {
         {error.message}
       </div>
     );
-  }
-  if (!profile.id) {
-    return <Registrar />;
   }
 
   return (
