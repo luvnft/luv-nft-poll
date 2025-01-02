@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import TrustTriangleExamples from "@/components/organisms/trust-triangle-examples";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type PredictionMarket = {
   id: string;
@@ -83,28 +83,6 @@ const recentActivity: ActivityItem[] = [
   },
 ];
 
-const topVolume: VolumeUser[] = [
-  {
-    id: "1",
-    username: "MyNameIsJohn",
-    volume: 34506062,
-    rank: 1,
-  },
-  {
-    id: "2",
-    username: "MAGATRUMPDIO2024",
-    volume: 33769138,
-    rank: 2,
-  },
-  {
-    id: "3",
-    username: "testerofshayneplatform",
-    volume: 33483376,
-    rank: 3,
-  },
-];
-
-// Fake data
 const predictionMarkets: PredictionMarket[] = [
   {
     id: "1",
@@ -232,29 +210,30 @@ const predictionMarkets: PredictionMarket[] = [
 ];
 
 const Home = () => {
-  const [hovered, setHovered] = useState(false);
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start'
+      });
+    }
+  };
 
   return (
-    <div className=" pt-8 px-4 md:px-24 flex flex-col  overflow-hidden gap-20">
+    <div className=" pt-6 px-4 md:px-24 flex flex-col  overflow-hidden gap-20">
       {/* hero section */}
-      <div className=" flex flex-col gap-[30px] relative ">
+      <div className=" flex flex-col gap-6 relative ">
         <header className=" flex justify-between items-center">
           <div className=" flex items-end gap-2">
             <Image
               alt="capyflows logo"
               src="/capyflows-logo.png"
-              width={45}
-              height={45}
-            />
-            <Image
-              alt="capyflows logo"
-              src="/CapyFlows.svg"
-              width={138}
-              height={40}
-              className="hidden md:block"
+              width={70}
+              height={70}
             />
           </div>
-          <Link href="/trust">
+          <Link href="/polls">
             <button className="border md:text-lg border-[#191A23] font-medium py-4 md:px-6 px-4 rounded-3xl">
               Launch App
             </button>
@@ -280,21 +259,21 @@ const Home = () => {
                 Decentralized prediction markets for fearless degenerates.
                 Create, trade, and win on the wildest crypto events.
               </p>
-              <Link href="/trust">
-                <button className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:bg-[#33CB82]/80 transition-colors duration-200">
+              <Link href="#polls" className=" scroll-smooth">
+                <button className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:scale-105 transition-all duration-200" onClick={() => scrollToSection("polls")}>
                   Explore Now
                   <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
                     <ArrowDown strokeWidth={3} className="text-emerald-400" />
                   </div>
                 </button>
               </Link>
-            </div>
+            </div> 
           </div>
         </div>
       </div>
 
       {/* polls for you  */}
-      <div className=" flex flex-col items-center mt-8">
+      <div className=" flex flex-col items-center mt-8" id="polls">
         <h2 className=" text-xl md:text-5xl font-medium mb-8 ">
           Polls for you
         </h2>
@@ -374,10 +353,6 @@ const Home = () => {
           </div>
         </button>
       </div>
-
-        {/* <h2 className=" text-xl md:text-5xl font-medium mb-8 ">
-          Polls for you
-        </h2> */}
 
         <div className="flex items-center justify-center">
           {/* Recent Activity Section */}
