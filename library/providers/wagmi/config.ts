@@ -9,7 +9,7 @@ export const config = createConfig(
     appName: "CapyFlows",
     walletConnectProjectId:
       process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-    chains: !isDev ? [anvil] : [sepolia],
+    chains: isDev ? [anvil] : [sepolia],
     multiInjectedProviderDiscovery: true,
     transports: {
       [anvil.id]: http(),
