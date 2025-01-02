@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader } from "lucide-react";
+import { Check, Loader } from "lucide-react";
 import { useParams } from "next/navigation";
 import {
   Address,
@@ -107,6 +107,9 @@ const Fund = () => {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isDistributing, setIsDistributing] = React.useState(false);
 
+  type YesNo = "Yes" | "No";
+
+  const winner: YesNo = "No";
   const currentTime = BigInt(Math.floor(Date.now() / 1000));
   const isRegistrationOpen =
     strategy?.registrationStartTime &&
@@ -163,7 +166,8 @@ const Fund = () => {
               {strategy?.name || `Trust ${ellipsisAddress(fund)}`}
             </h2> */}
             <h2 className="text-3xl font-bold tracking-tight">
-            Will Ethena will become the top DeFi protocol by TVL in Q1 2025?            </h2>
+              Will Ethena become the top DeFi protocol by TVL in Q1 2025?
+            </h2>
           </div>
           <div className=" ">
             {/* {strategy?.description || (
@@ -244,31 +248,74 @@ const Fund = () => {
             </TabsList>
           </div>
 
-          <TabsContent value="polls" className="space-y-4">
+          <TabsContent value="polls" className="space-y-10">
             <YesNoChart />
-            <div className=" flex gap-5 pt-5">
-              <Input placeholder="Enter stake amount (USDe)" className="h-12" />
-              <RadialChart />
-            </div>
-            <div className=" flex  gap-8 ">
-              <Button className="w-full h-12 bg-green-500 hover:bg-green-400">
-                Stake YES
-              </Button>
-              <Button className="w-full h-12 bg-red-500 hover:bg-red-400">
-                Stake NO
-              </Button>
-            </div>
-            {/* <div className="col-span-5 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-              {beneficiaries.length > 0 ? (
-                beneficiaries.map((beneficiary) => (
-                  <Beneficiary key={beneficiary.address} data={beneficiary} />
-                ))
-              ) : (
-                <div className="col-span-full text-center text-gray-500">
-                  No beneficiaries found
+
+            {isRegistrationOpen ? (
+              <>
+                <div className=" flex gap-5 pt-5">
+                  <Input
+                    placeholder="Enter stake amount (USDe)"
+                    className="h-12"
+                  />
+                  <RadialChart />
                 </div>
-              )}
-            </div> */}
+                <div className=" flex  gap-8 ">
+                  <Button className="w-full h-12 bg-green-500 hover:bg-green-400">
+                    Stake YES
+                  </Button>
+                  <Button className="w-full h-12 bg-red-500 hover:bg-red-400">
+                    Stake NO
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className=" border border-gray-200 p-8 rounded-2xl justify-between items-end mt-10">
+                <div className=" pb-3">
+                  <div className=" flex gap-3 items-center">
+                    <div
+                      className={` ${
+                        (winner as YesNo) === "Yes"
+                          ? " bg-green-200"
+                          : " bg-red-200"
+                      } min-w-12 h-12 rounded-full grid place-items-center`}
+                    >
+                      <Check
+                        size={30}
+                        strokeWidth={3}
+                        className={` ${
+                          (winner as YesNo) === "Yes"
+                            ? " text-green-500"
+                            : " text-red-500"
+                        }`}
+                      />
+                    </div>
+                    <h2 className="text-2xl font-semibold leading-none tracking-tight">
+                      Results are in! {winner} Won 🎯
+                    </h2>
+                  </div>
+                  <p className=" text-gray-800 text-lg pt-2">
+                    For {winner} voters, your tokens retain their full
+                    value—boosted by the interest yield from everyone&apos;s stakes.
+                    Hold or trade your {winner} tokens as you like. You can also
+                    withdraw your USDE stake anytime. <br />
+                    For {(winner as YesNo) === "Yes" ? " No" : " Yes"} voters,
+                    prepare for the double-blitz with 500x inflation in 24 hours
+                    and another 500x in 48 hours. Withdraw your USDE stake—it&apos;s
+                    no-loss, and your
+                    {(winner as YesNo) === "Yes" ? " No" : " Yes"} tokens are
+                    now purely for entertainment!{" "}
+                  </p>
+                </div>
+                <div className=" flex justify-end">
+
+                <Button className=" bg-white text-gray-800 border hover:scale-105 hover:bg-white transition-all duration-300 text-xl h-12 shadow-none border-gray-300">
+                  {" "}
+                  Withdraw Funds
+                </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">

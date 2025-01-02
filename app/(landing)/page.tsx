@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/atoms/card";
 import { AnimatePresence, motion } from "framer-motion";
-import { CanvasRevealEffect } from "@/components/atoms/canvas-reveal-effect";
 
 import TrustTriangleExamples from "@/components/organisms/trust-triangle-examples";
 import { formatDistanceToNow } from "date-fns";
