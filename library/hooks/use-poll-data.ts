@@ -64,7 +64,7 @@ const usePollData = (strategyAddress?: Address) => {
         allocationEndTimeResponse,
       ] = await Promise.all([
         fetch(
-          "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capypolls-subgraph/1.0.2/gn",
+          "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.2/gn",
           {
             method: "POST",
             headers: {
