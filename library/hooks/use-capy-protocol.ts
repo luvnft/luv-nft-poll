@@ -52,8 +52,7 @@ type FunctionParams = {
 };
 
 const useCapyProtocol = () => {
-  // Complex operation with multiple contract interactions - keep useCallback
-  const createPoll = useCallback(async (params: FunctionParams["createPoll"]) => {
+  const createPoll = async (params: FunctionParams["createPoll"]) => {
     try {
       const { request } = await simulateContract(config, {
         abi: CAPY_CORE_ABI,
@@ -71,15 +70,13 @@ const useCapyProtocol = () => {
           params.noTokenSymbol,
         ],
       });
-      const receipt = await writeContract(config, request);
-      return {createPollTx: receipt };
-      
-      //return writeContract(config, request);
+      const hash = await writeContract(config, request);
+      return hash;
     } catch (error) {
       console.error("Error creating poll:", error);
       throw error;
     }
-  }, []);
+  };
 
   // Stake Function (works for both YES and NO positions)
   const stake = async (params: FunctionParams["stake"]) => {

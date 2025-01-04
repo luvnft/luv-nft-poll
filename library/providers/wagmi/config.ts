@@ -9,11 +9,12 @@ export const config = createConfig(
     appName: "capypolls",
     walletConnectProjectId:
       process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-    chains: isDev ? [anvil] : [sepolia, opBNBTestnet],
+    //chains: isDev ? [anvil] : [opBNBTestnet],
+    chains: [opBNBTestnet],
     multiInjectedProviderDiscovery: true,
     transports: {
-      [anvil.id]: http(),
-      [sepolia.id]: http("https://opbnb-testnet.g.alchemy.com/v2/wmmPIFmPi700hZkT_QuBCKRvsCpvJ-J9"),
+      //[anvil.id]: http(),
+      //[sepolia.id]: http("https://opbnb-testnet.g.alchemy.com/v2/wmmPIFmPi700hZkT_QuBCKRvsCpvJ-J9"),
       [opBNBTestnet.id]: http("https://opbnb-testnet.g.alchemy.com/v2/wmmPIFmPi700hZkT_QuBCKRvsCpvJ-J9"),
     },
   })

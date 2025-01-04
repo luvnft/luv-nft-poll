@@ -46,6 +46,10 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useAccount } from "wagmi";
 import { useMounted } from "@/hooks/use-mounted";
+import useCapyProtocol from "@/hooks/use-capy-protocol";
+import { waitForTransactionReceipt } from "wagmi/actions";
+import { config } from "@/providers/wagmi/config";
+import { parseEther } from "viem";
 
 const FormSchema = z.object({
   question: z.string().min(1, { message: "Question is required" }),
@@ -61,6 +65,7 @@ const FormSchema = z.object({
     .min(1, { message: "Yes token symbol is required" }),
   noTokenName: z.string().min(1, { message: "No token name is required" }),
   noTokenSymbol: z.string().min(1, { message: "No token symbol is required" }),
+  initialStake: z.string().min(1, { message: "Initial stake is required" }),
 });
 
 const NewPoll = () => {
@@ -69,6 +74,7 @@ const NewPoll = () => {
   const [open, setOpen] = useState(false);
   const { address } = useAccount();
   const isMounted = useMounted();
+  const { createPoll, approveUSDe, formatAmount } = useCapyProtocol();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -82,30 +88,72 @@ const NewPoll = () => {
       yesTokenSymbol: "",
       noTokenName: "",
       noTokenSymbol: "",
+      initialStake: "",
     },
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!address) {
       throw new Error("Please connect wallet");
+      // toast.error("Please connect wallet");
+      // return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // TODO: Dave Deploy contract call would go here.
-      console.log("Form data:", data);
+      const durationInSeconds = getDurationInSeconds(data.durationValue, data.durationUnit);
+      const initialStakeAmount = formatAmount(data.initialStake);
+
+      // First approve USDe spending
+      const approveTx = await approveUSDe(address, initialStakeAmount);
+      const approveReceipt = await waitForTransactionReceipt(config, {
+        hash: approveTx,
+      });
+      console.log("Approval successful:", approveReceipt.transactionHash);
+
+      // Create the poll
+      const createPollTx = await createPoll({
+        initialStake: initialStakeAmount,
+        question: data.question,
+        avatar: data.avatar || "",
+        description: data.description || "",
+        duration: BigInt(durationInSeconds),
+        yesTokenName: data.yesTokenName,
+        yesTokenSymbol: data.yesTokenSymbol,
+        noTokenName: data.noTokenName,
+        noTokenSymbol: data.noTokenSymbol,
+      });
+
+      const createPollReceipt = await waitForTransactionReceipt(config, {
+        hash: createPollTx,
+      });
+
+      console.log("Poll created successfully:", createPollReceipt.transactionHash);
       toast.success("Poll created successfully!");
       form.reset();
+      //setOpen(false);
     } catch (error) {
       console.error("Error creating poll:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to create poll"
       );
+      //toast.error(error instanceof Error ? error.message : "Failed to create poll");
     } finally {
       setOpen(false);
       setIsSubmitting(false);
     }
+  };
+
+  const getDurationInSeconds = (value: number, unit: string): number => {
+    const multipliers = {
+      seconds: 1,
+      minutes: 60,
+      hours: 3600,
+      days: 86400,
+      weeks: 604800,
+    };
+    return value * multipliers[unit as keyof typeof multipliers];
   };
 
   const content = (
@@ -282,6 +330,22 @@ const NewPoll = () => {
               )}
             />
           </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FormField
+            control={form.control}
+            name="initialStake"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Initial Stake (USDe)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="Enter initial stake amount" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="h-6"></div>
