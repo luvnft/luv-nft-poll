@@ -7,14 +7,21 @@ import { cn } from "@/utils";
 const Header = ({ className }: { className?: string }) => {
   return (
     <header className={cn("border-b", className)}>
-      <div className="flex h-16 items-center px-4">
+      <div className="flex items-center px-4 py-2">
         <div className="flex items-center">
           <Link href={"/"}>
             <Image
+<<<<<<< HEAD
               alt="capyflows logo"
               src="/capyflows-logo.png"
               width={48}
               height={48}
+=======
+              alt="capypolls logo"
+              src="/capypolls-logo.png"
+              width={70}
+              height={70}
+>>>>>>> c98aead (chore: clean up)
             />
           </Link>
         </div>

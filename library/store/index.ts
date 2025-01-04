@@ -16,7 +16,7 @@ const useStore = create<State>()(
     (set, get, store) => ({
       ...createGlobalStateSlice(set, get, store),
     }),
-    { name: "CapyFlows" }
+    { name: "capypolls" }
   )
 );
 

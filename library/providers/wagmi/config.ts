@@ -6,7 +6,7 @@ const isDev = process.env.NODE_ENV === 'development';
 
 export const config = createConfig(
   getDefaultConfig({
-    appName: "CapyFlows",
+    appName: "capypolls",
     walletConnectProjectId:
       process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
     chains: isDev ? [anvil] : [sepolia],

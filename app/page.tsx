@@ -1,20 +1,18 @@
-"use client"
-import { ArrowDown, ArrowUpRight, Timer, User } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+"use client";
+
+import { formatDistanceToNow } from "date-fns";
+import { ArrowDown, Loader, Timer, User } from "lucide-react";
+
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/atoms/card";
-import { AnimatePresence, motion } from "framer-motion";
-
-import TrustTriangleExamples from "@/components/organisms/trust-triangle-examples";
-import { formatDistanceToNow } from "date-fns";
-import { useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import NewPoll from "@/components/organisms/new-poll";
+import { useMounted } from "@/hooks/use-mounted";
 
 type PredictionMarket = {
   id: string;
@@ -37,13 +35,6 @@ type ActivityItem = {
   amount: number;
   timestamp: Date;
   teamLogo?: string;
-};
-
-type VolumeUser = {
-  id: string;
-  username: string;
-  volume: number;
-  rank: number;
 };
 
 // Mock Data
@@ -210,46 +201,27 @@ const predictionMarkets: PredictionMarket[] = [
 ];
 
 const Home = () => {
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start'
-      });
-    }
-  };
+  const isMounted = useMounted();
+
+  if (!isMounted) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <Loader className="animate-spin text-gray-500 mt-36 mb-4" size={24} />
+        <p className="text-gray-700">Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className=" pt-6 px-4 md:px-24 flex flex-col  overflow-hidden gap-20">
-      {/* hero section */}
+    <div className="px-4 md:px-24 flex flex-col  overflow-hidden gap-20">
       <div className=" flex flex-col gap-6 relative ">
-        <header className=" flex justify-between items-center">
-          <div className=" flex items-end gap-2">
-            <Image
-              alt="capyflows logo"
-              src="/capyflows-logo.png"
-              width={70}
-              height={70}
-            />
-          </div>
-          <Link href="/polls">
-            <button className="border md:text-lg border-[#191A23] font-medium py-4 md:px-6 px-4 rounded-3xl">
-              Launch App
-            </button>
-          </Link>
-        </header>
-        {/* <div className="absolute inset-0  h-[400px] w-[400px] bg-green-400 opacity-70  -z-10 top-[150px] blur-[200px] left-[100px] rounded-full" /> */}
-
         <div className="relative h-[60vh] md:w-[calc(100%+12rem)] md:-ml-24 ">
-          {/* Background Image */}
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url('/hero.png')" }}
           ></div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50  to-transparent"></div>
 
-          {/* Overlay Content */}
           <div className="absolute inset-0 flex flex-col items-start justify-center px-6 md:px-24 text-white">
             <div className="w-full md:w-1/2 gap-4 flex flex-col ">
               <h1 className="text-4xl md:text-6xl font-medium font-mouse">
@@ -259,20 +231,12 @@ const Home = () => {
                 Decentralized prediction markets for fearless degenerates.
                 Create, trade, and win on the wildest crypto events.
               </p>
-              <Link href="#polls" className=" scroll-smooth">
-                <button className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:scale-105 transition-all duration-200" onClick={() => scrollToSection("polls")}>
-                  Explore Now
-                  <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
-                    <ArrowDown strokeWidth={3} className="text-emerald-400" />
-                  </div>
-                </button>
-              </Link>
-            </div> 
+              <NewPoll />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* polls for you  */}
       <div className=" flex flex-col items-center mt-8" id="polls">
         <h2 className=" text-xl md:text-5xl font-medium mb-8 ">
           Polls for you
@@ -280,8 +244,6 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {predictionMarkets.map((market) => (
             <Card key={market.id} className="overflow-hidden">
-              {/* Image Section */}
-
               <CardHeader>
                 <div className="relative ">
                   <Image
@@ -292,12 +254,10 @@ const Home = () => {
                     className=" rounded-full"
                   />
                 </div>
-                {/* Question */}
                 <CardTitle className="text-lg font-medium">
                   {market.question}
                 </CardTitle>
 
-                {/* Status and Tags */}
                 <div className="flex gap-2 mb-2">
                   <span
                     className={`px-3 py-1 rounded-full text-xs ${
@@ -335,7 +295,6 @@ const Home = () => {
                   </div>
                 </div>
 
-                {/* Time Remaining */}
                 <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
                   <Timer className="w-4 h-4" />
                   <span>
@@ -354,51 +313,48 @@ const Home = () => {
         </button>
       </div>
 
-        <div className="flex items-center justify-center">
-          {/* Recent Activity Section */}
-          <div className=" w-2/3">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Recent Activity</h2>
-             
-            </div>
-
-            <div className="space-y-4">
-              {recentActivity.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 justify-between">
-                  <img
-                    src={item.teamLogo}
-                    alt=""
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm mb-1">{item.question}</div>
-                    <div className="text-sm">
-                      <span className="font-medium">{item.user}</span>{" "}
-                      {item.action}{" "}
-                      <span
-                        className={
-                          item.choice === "Yes"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }
-                      >
-                        {item.choice}
-                      </span>{" "}
-                      at (${item.amount})
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {formatDistanceToNow(item.timestamp, { addSuffix: true })}
-                  </div>
-                </div>
-              ))}
-            </div>
+      <div className="flex items-center justify-center">
+        <div className=" w-2/3">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Recent Activity</h2>
           </div>
 
-
+          <div className="space-y-4">
+            {recentActivity.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 justify-between"
+              >
+                <img
+                  src={item.teamLogo}
+                  alt=""
+                  className="w-8 h-8 rounded-full"
+                />
+                <div className="flex-1">
+                  <div className="text-sm mb-1">{item.question}</div>
+                  <div className="text-sm">
+                    <span className="font-medium">{item.user}</span>{" "}
+                    {item.action}{" "}
+                    <span
+                      className={
+                        item.choice === "Yes"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }
+                    >
+                      {item.choice}
+                    </span>{" "}
+                    at (${item.amount})
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {formatDistanceToNow(item.timestamp, { addSuffix: true })}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-
-
+      </div>
 
       <div className=" flex items-center justify-center md:w-[calc(100%+12rem)] md:-ml-24 py-20 bg-slate-200 ">
         <Link

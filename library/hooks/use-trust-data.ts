@@ -19,7 +19,7 @@ const useTrustData = (userAddress?: Address) => {
     queryKey: ["activeFunds", userAddress],
     queryFn: async () => {
       const response = await fetch(
-        "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.2/gn",
+        "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capypolls-subgraph/1.0.2/gn",
         {
           method: "POST",
           headers: {
@@ -56,7 +56,7 @@ const useTrustData = (userAddress?: Address) => {
     queryKey: ["dashboardStats", userAddress],
     queryFn: async () => {
       const response = await fetch(
-        "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.2/gn",
+        "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capypolls-subgraph/1.0.2/gn",
         {
           method: "POST",
           headers: {
