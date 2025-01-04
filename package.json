@@ -38,6 +38,7 @@
     "emoji-picker-react": "^4.5.2",
     "framer-motion": "^11.15.0",
     "immer": "^10.1.1",
+    "ky": "^1.7.4",
     "lucide-react": "^0.395.0",
     "mini-svg-data-uri": "^1.4.4",
     "next": "15.0.3",
