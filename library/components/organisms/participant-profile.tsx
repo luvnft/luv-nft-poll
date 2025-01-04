@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/atoms/select";
-import { Participant } from "@/hooks/use-fund-data";
+import { Participant } from "@/hooks/use-poll-data";
 import { ellipsisAddress, getInitials, isValidUrl } from "@/utils";
 
 type Step = "allocation" | "registration" | "distribution";

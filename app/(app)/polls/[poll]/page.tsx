@@ -3,11 +3,16 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { ArrowUpRight, Check, Loader } from "lucide-react";
 import { useParams } from "next/navigation";
-import * as React from "react";
 import { Address } from "viem";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import { Button } from "@/components/atoms/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/atoms/card";
 import { Input } from "@/components/atoms/input";
 import { Separator } from "@/components/atoms/separator";
 import {
@@ -16,14 +21,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/atoms/tabs";
-import FundStats from "@/components/molecules/fund-stats";
-import { Participant } from "@/components/organisms/participant-profile";
 import { RadialChart } from "@/components/organisms/radial-chart";
 import { YesNoChart } from "@/components/organisms/yes-no-chart";
-import useCapyProtocol from "@/hooks/use-capy-protocol";
-import useFundData from "@/hooks/use-fund-data";
 import { useMounted } from "@/hooks/use-mounted";
-import { getInitials, isValidUrl } from "@/utils";
+import { ellipsisAddress, getInitials, isValidUrl } from "@/utils";
+import usePollData from "@/hooks/use-poll-data";
 
 const recentActivity = [
   {
@@ -55,16 +57,13 @@ const recentActivity = [
   },
 ];
 
-const Fund = () => {
+const Poll = () => {
   const params = useParams();
-  const fund = params.fund as Address;
   const isMounted = useMounted();
+  const { strategy, isLoading, error, winner } = usePollData(
+    params.poll as Address
+  );
 
-  const { strategy, isLoading, error } = useFundData(fund);
-
-  type YesNo = "Yes" | "No";
-
-  const winner: YesNo = "No";
   const currentTime = BigInt(Math.floor(Date.now() / 1000));
   const isRegistrationOpen =
     strategy?.registrationStartTime &&
@@ -111,7 +110,7 @@ const Fund = () => {
                         (strategy?.name ?? "")
                       }`
                 }
-                alt={`${strategy?.name ?? "Trust Fund"} logo`}
+                alt={`${strategy?.name ?? "Poll"} logo`}
               />
               <AvatarFallback>
                 {getInitials(strategy?.name ?? "")}
@@ -119,16 +118,12 @@ const Fund = () => {
             </Avatar>
 
             <h2 className="text-3xl font-bold tracking-tight">
-              Will Ethena become the top DeFi protocol by TVL in Q1 2025?
+              {strategy.name}
             </h2>
           </div>
+
           <div className=" ">
-            <p className=" text-gray-800">
-              Ethena must rank as the top DeFi protocol by TVL on DeFiLlama for
-              at least 7 consecutive days in Q1 2025, with TVL measured in USD
-              from genuine user deposits; disqualifications include hacks over
-              $10M, prolonged pauses, or TVL manipulation.
-            </p>
+            <p className=" text-gray-800">{strategy.description}</p>
             {!isRegistrationOpen && strategy?.registrationEndTime && (
               <p className="text-sm text-gray-500 mt-2">
                 Registration closed{" "}
@@ -168,7 +163,53 @@ const Fund = () => {
               )}
           </div>
 
-          <FundStats data={strategy} />
+          <div className="">
+            <Card className=" flex">
+              <div className=" w-1/2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Poll Contract
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {ellipsisAddress(strategy.strategyAddress)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Deployed{" "}
+                    {formatDistanceToNow(
+                      new Date(strategy.blockTimestamp * 1000),
+                      {
+                        addSuffix: true,
+                      }
+                    )}
+                  </p>
+                </CardContent>
+              </div>
+
+              <div className=" w-1 flex items-center">
+                <Separator orientation="vertical" className=" h-3/4" />
+              </div>
+
+              <div className=" w-1/2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Staked
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-2xl font-bold">
+                    {/* TODO: change from poolSize */}
+                    {Number(strategy.poolSize).toFixed(3)}&nbsp;{" "}
+                    <span className="text-lg font-medium">USDe</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    +0% from last month
+                  </p>
+                </CardContent>
+              </div>
+            </Card>
+          </div>
         </div>
 
         <div className=" w-1 hidden md:block">
@@ -220,18 +261,14 @@ const Fund = () => {
                   <div className=" flex gap-3 items-center">
                     <div
                       className={` ${
-                        (winner as YesNo) === "Yes"
-                          ? " bg-green-200"
-                          : " bg-red-200"
+                        winner === "Yes" ? " bg-green-200" : " bg-red-200"
                       } min-w-12 h-12 rounded-full grid place-items-center`}
                     >
                       <Check
                         size={30}
                         strokeWidth={3}
                         className={` ${
-                          (winner as YesNo) === "Yes"
-                            ? " text-green-500"
-                            : " text-red-500"
+                          winner === "Yes" ? " text-green-500" : " text-red-500"
                         }`}
                       />
                     </div>
@@ -244,12 +281,12 @@ const Fund = () => {
                     value—boosted by the interest yield from everyone&apos;s
                     stakes. Hold or trade your {winner} tokens as you like. You
                     can also withdraw your USDE stake anytime. <br />
-                    For {(winner as YesNo) === "Yes" ? " No" : " Yes"} voters,
-                    prepare for the double-blitz with 500x inflation in 24 hours
-                    and another 500x in 48 hours. Withdraw your USDE
-                    stake—it&apos;s no-loss, and your
-                    {(winner as YesNo) === "Yes" ? " No" : " Yes"} tokens are
-                    now purely for entertainment!{" "}
+                    For {winner === "Yes" ? " No" : " Yes"} voters, prepare for
+                    the double-blitz with 500x inflation in 24 hours and another
+                    500x in 48 hours. Withdraw your USDE stake—it&apos;s
+                    no-loss, and your
+                    {winner === "Yes" ? " No" : " Yes"} tokens are now purely
+                    for entertainment!{" "}
                   </p>
                 </div>
                 <div className=" flex justify-end">
@@ -309,4 +346,4 @@ const Fund = () => {
   );
 };
 
-export default Fund;
+export default Poll;

@@ -50,7 +50,7 @@ export interface Strategy {
   allocationEndTime: bigint;
 }
 
-const useFundData = (strategyAddress?: Address) => {
+const usePollData = (strategyAddress?: Address) => {
   const strategyQuery = useQuery<Strategy>({
     queryKey: ["strategy", strategyAddress],
     queryFn: async () => {
@@ -63,13 +63,15 @@ const useFundData = (strategyAddress?: Address) => {
         allocationStartTimeResponse,
         allocationEndTimeResponse,
       ] = await Promise.all([
-        fetch("https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.2/gn", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: `
+        fetch(
+          "https://api.goldsky.com/api/public/project_cm3qfn5fuevvy01tpflhe9hb0/subgraphs/capyflows-subgraph/1.0.2/gn",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: `
               query GetStrategy($address: String!) {
                 strategyCreateds(
                   where: { strategyAddress: $address }
@@ -83,9 +85,10 @@ const useFundData = (strategyAddress?: Address) => {
                 }
               }
             `,
-            variables: { address: strategyAddress },
-          }),
-        }),
+              variables: { address: strategyAddress },
+            }),
+          }
+        ),
         readContract(config, {
           address: strategyAddress!,
           abi: CAPY_STRATEGY_ABI,
@@ -283,7 +286,10 @@ const useFundData = (strategyAddress?: Address) => {
     enabled: !!strategyAddress,
   });
 
+  const winner = "Yes";
+
   return {
+    winner,
     strategy: strategyQuery.data,
     beneficiaries: beneficiariesQuery.data || [],
     participants: participantsQuery.data || [],
@@ -298,4 +304,4 @@ const useFundData = (strategyAddress?: Address) => {
   };
 };
 
-export default useFundData;
+export default usePollData;

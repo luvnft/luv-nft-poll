@@ -25,7 +25,7 @@ import {
   DrawerTrigger,
 } from "@/components/atoms/drawer";
 import { Progress } from "@/components/atoms/progress";
-import { Beneficiary } from "@/hooks/use-fund-data";
+import { Beneficiary } from "@/hooks/use-poll-data";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ellipsisAddress, isValidUrl } from "@/utils";
 
