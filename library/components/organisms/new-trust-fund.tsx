@@ -46,7 +46,7 @@ import {
   TooltipTrigger,
 } from "@/components/atoms/tooltip";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import useCapyProtocol from "@/hooks/use-capy-protocol";
+import useCapyProtocol from "@/hooks/use-capy-protocol-deprecated";
 import useStore from "@/store";
 import { Token } from "@/types";
 import { useAccount } from "wagmi";
