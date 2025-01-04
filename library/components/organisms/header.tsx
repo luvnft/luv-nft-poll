@@ -11,17 +11,10 @@ const Header = ({ className }: { className?: string }) => {
         <div className="flex items-center">
           <Link href={"/"}>
             <Image
-<<<<<<< HEAD
-              alt="capyflows logo"
-              src="/capyflows-logo.png"
-              width={48}
-              height={48}
-=======
               alt="capypolls logo"
               src="/capypolls-logo.png"
               width={70}
               height={70}
->>>>>>> c98aead (chore: clean up)
             />
           </Link>
         </div>
