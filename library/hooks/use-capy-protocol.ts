@@ -7,11 +7,10 @@ import { useCallback } from "react";
 import { Address, erc20Abi, parseUnits } from "viem";
 import { readContract } from "wagmi/actions";
 
-const CAPY_CORE_ADDRESS = capyCore.address as `0x${string}`;
 const CAPY_POLL_ABI = capyPoll.abi;
 const CAPY_CORE_ABI = capyCore.abi;
-const USDE_TOKEN_ADDRESS =
-  "0x9E1eF5A92C9Bf97460Cd00C0105979153EA45b27" as `0x${string}`;
+const USDE_TOKEN_ADDRESS = "0x9E1eF5A92C9Bf97460Cd00C0105979153EA45b27";
+const CAPY_CORE_ADDRESS = capyCore.address;
 
 // Types for function parameters
 type FunctionParams = {
