@@ -5,8 +5,10 @@ import { readContract } from "wagmi/actions";
 
 import { config } from "@/providers/wagmi/config";
 import capyStrategy from "@/types/contracts/capy-strategy";
+import capyPoll from "@/types/contracts/capy-poll";
 
 const CAPY_STRATEGY_ABI = capyStrategy.abi;
+const CAPY_POLL_ABI = capyPoll.abi;
 
 export interface Beneficiary {
   address: string;
@@ -90,33 +92,33 @@ const usePollData = (strategyAddress?: Address) => {
           }
         ),
         readContract(config, {
-          address: strategyAddress!,
-          abi: CAPY_STRATEGY_ABI,
+          address: pollAddress!,
+          abi: CAPY_POLL_ABI,
           functionName: "getPoolAmount",
         }),
         readContract(config, {
-          address: strategyAddress!,
-          abi: CAPY_STRATEGY_ABI,
+          address: pollAddress!,
+          abi: CAPY_POLL_ABI,
           functionName: "getPoolId",
         }),
         readContract(config, {
-          address: strategyAddress!,
-          abi: CAPY_STRATEGY_ABI,
+          address: pollAddress!,
+              abi: CAPY_POLL_ABI,
           functionName: "registrationStartTime",
         }),
         readContract(config, {
-          address: strategyAddress!,
-          abi: CAPY_STRATEGY_ABI,
+          address: pollAddress!,
+          abi: CAPY_POLL_ABI,
           functionName: "registrationEndTime",
         }),
         readContract(config, {
-          address: strategyAddress!,
-          abi: CAPY_STRATEGY_ABI,
+          address: pollAddress!,
+          abi: CAPY_POLL_ABI,
           functionName: "allocationStartTime",
         }),
         readContract(config, {
-          address: strategyAddress!,
-          abi: CAPY_STRATEGY_ABI,
+          address: pollAddress!,
+          abi: CAPY_POLL_ABI,
           functionName: "allocationEndTime",
         }),
       ]);
