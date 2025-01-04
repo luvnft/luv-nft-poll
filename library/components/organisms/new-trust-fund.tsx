@@ -45,7 +45,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/atoms/tooltip";
-import TokenSelect from "@/components/molecules/select-token";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import useCapyProtocol from "@/hooks/use-capy-protocol";
 import useStore from "@/store";
@@ -220,46 +219,6 @@ const NewTrustFund = () => {
               </FormItem>
             )}
           />
-
-          <div className="flex gap-2 items-center">
-            <FormField
-              control={form.control}
-              name="token"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <TokenSelect
-                      tokens={tokens}
-                      selectedToken={field.value}
-                      onSelectToken={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="Amount"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value))
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
           <FormField
             control={form.control}

@@ -1,23 +1,16 @@
-"use client"
+"use client";
 
-import { TrendingUp } from "lucide-react"
-import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts"
+import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/atoms/card"
+import { CardContent } from "@/components/atoms/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/atoms/chart"
-const chartData = [{ type: "vote", yes: 1260, no: 570 }]
+} from "@/components/atoms/chart";
+
+const chartData = [{ type: "vote", yes: 1260, no: 570 }];
 
 const chartConfig = {
   desktop: {
@@ -28,14 +21,13 @@ const chartConfig = {
     label: "yes",
     color: "hsl(var(--chart-2))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function RadialChart() {
-  const totalVisitors = chartData[0].no + chartData[0].yes
+  const totalVisitors = chartData[0].no + chartData[0].yes;
 
   return (
     <div className="flex flex-col w-2/5">
-
       <CardContent className="flex items-center pb-0 justify-center">
         <ChartContainer
           config={chartConfig}
@@ -72,7 +64,7 @@ export function RadialChart() {
                           Votes
                         </tspan>
                       </text>
-                    )
+                    );
                   }
                 }}
               />
@@ -94,7 +86,6 @@ export function RadialChart() {
           </RadialBarChart>
         </ChartContainer>
       </CardContent>
-
     </div>
-  )
+  );
 }

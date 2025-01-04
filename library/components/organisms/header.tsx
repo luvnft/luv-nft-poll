@@ -1,9 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 
-import { MainNav } from "@/components/molecules/nav-main";
 import { UserNav } from "@/components/molecules/nav-user";
 import { cn } from "@/utils";
-import Link from "next/link";
 
 const Header = ({ className }: { className?: string }) => {
   return (
@@ -11,16 +10,14 @@ const Header = ({ className }: { className?: string }) => {
       <div className="flex h-16 items-center px-4">
         <div className="flex items-center">
           <Link href={"/"}>
-
-          <Image
-            alt="capyflows logo"
-            src="/capyflows-logo.png"
-            width={48}
-            height={48}
-          />
+            <Image
+              alt="capyflows logo"
+              src="/capyflows-logo.png"
+              width={48}
+              height={48}
+            />
           </Link>
         </div>
-        {/* <MainNav className="mx-6" /> */}
         <div className="ml-auto flex items-center space-x-4">
           <UserNav />
         </div>
