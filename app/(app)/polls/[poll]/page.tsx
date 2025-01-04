@@ -1,18 +1,15 @@
 "use client";
 
-import * as React from "react";
+import { format, formatDistanceToNow } from "date-fns";
 import { ArrowUpRight, Check, Loader } from "lucide-react";
 import { useParams } from "next/navigation";
-import {
-  Address,
-  encodeAbiParameters,
-  parseAbiParameters,
-  parseEther,
-} from "viem";
-import { formatDistanceToNow, format } from "date-fns";
-import { Lock } from "lucide-react";
-import { toast } from "sonner";
+import * as React from "react";
+import { Address } from "viem";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
+import { Button } from "@/components/atoms/button";
+import { Input } from "@/components/atoms/input";
+import { Separator } from "@/components/atoms/separator";
 import {
   Tabs,
   TabsContent,
@@ -20,40 +17,13 @@ import {
   TabsTrigger,
 } from "@/components/atoms/tabs";
 import FundStats from "@/components/molecules/fund-stats";
-import Beneficiary from "@/components/organisms/beneficiary-profile";
-import NewTrustFundApplication from "@/components/organisms/trust-fund-application";
+import { Participant } from "@/components/organisms/participant-profile";
+import { RadialChart } from "@/components/organisms/radial-chart";
+import { YesNoChart } from "@/components/organisms/yes-no-chart";
+import useCapyProtocol from "@/hooks/use-capy-protocol";
 import useFundData from "@/hooks/use-fund-data";
 import { useMounted } from "@/hooks/use-mounted";
-import { ellipsisAddress, getInitials, isValidUrl } from "@/utils";
-import ParticipantProfile, {
-  Participant,
-} from "@/components/organisms/participant-profile";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
-import { defineStepper } from "@stepperize/react";
-import { Button } from "@/components/atoms/button";
-import useCapyProtocol from "@/hooks/use-capy-protocol";
-import { Separator } from "@/components/atoms/separator";
-import { YesNoChart } from "@/components/organisms/yes-no-chart";
-import { Input } from "@/components/atoms/input";
-import { RadialChart } from "@/components/organisms/radial-chart";
-
-const { useStepper } = defineStepper(
-  {
-    id: "registration",
-    title: "Registration",
-    description: "Register participants",
-  },
-  {
-    id: "allocation",
-    title: "Allocation",
-    description: "Allocate resources",
-  },
-  {
-    id: "distribution",
-    title: "Distribution",
-    description: "Distribute funds",
-  }
-);
+import { getInitials, isValidUrl } from "@/utils";
 
 const recentActivity = [
   {
@@ -89,23 +59,8 @@ const Fund = () => {
   const params = useParams();
   const fund = params.fund as Address;
   const isMounted = useMounted();
-  const stepper = useStepper();
-  const isAdmin = true;
-  const { updateRecipientStatus, allocate, distribute } = useCapyProtocol();
 
-  const { beneficiaries, strategy, participants, isLoading, error } =
-    useFundData(fund);
-
-  // State for tracking changes in participant statuses and allocations
-  const [participantChanges, setParticipantChanges] = React.useState<{
-    [address: string]: {
-      status?: Participant["status"];
-      allocation?: string;
-    };
-  }>({});
-
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [isDistributing, setIsDistributing] = React.useState(false);
+  const { strategy, isLoading, error } = useFundData(fund);
 
   type YesNo = "Yes" | "No";
 
@@ -136,7 +91,7 @@ const Fund = () => {
   if (!strategy?.strategyAddress) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 mt-32">
-        Trust fund does not exist yet
+        Poll does not exist yet
       </div>
     );
   }
@@ -162,17 +117,12 @@ const Fund = () => {
                 {getInitials(strategy?.name ?? "")}
               </AvatarFallback>
             </Avatar>
-            {/* <h2 className="text-3xl font-bold tracking-tight">
-              {strategy?.name || `Trust ${ellipsisAddress(fund)}`}
-            </h2> */}
+
             <h2 className="text-3xl font-bold tracking-tight">
               Will Ethena become the top DeFi protocol by TVL in Q1 2025?
             </h2>
           </div>
           <div className=" ">
-            {/* {strategy?.description || (
-              <p className=" text-gray-800">This is trust fund {fund}.</p>
-            )} */}
             <p className=" text-gray-800">
               Ethena must rank as the top DeFi protocol by TVL on DeFiLlama for
               at least 7 consecutive days in Q1 2025, with TVL measured in USD
@@ -219,11 +169,6 @@ const Fund = () => {
           </div>
 
           <FundStats data={strategy} />
-          {/* <div className="flex items-center space-x-2">
-            {strategy?.poolId && (
-              <NewTrustFundApplication poolId={strategy?.poolId} />
-            )}
-          </div> */}
         </div>
 
         <div className=" w-1 hidden md:block">
