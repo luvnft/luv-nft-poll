@@ -27,8 +27,6 @@ import { RadialChart } from "@/components/organisms/radial-chart";
 import { YesNoChart } from "@/components/organisms/yes-no-chart";
 import { useMounted } from "@/hooks/use-mounted";
 import { ellipsisAddress, getInitials, isValidUrl } from "@/utils";
-import usePollData from "@/hooks/use-poll-data";
-import { opBNBTestnet, sepolia } from "wagmi/chains";
 import useCapyProtocol from "@/hooks/use-capy-protocol";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { config } from "@/providers/wagmi/config";
@@ -70,45 +68,28 @@ const Poll = () => {
   const [isStaking, setIsStaking] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [stakeAmount, setStakeAmount] = useState("");
-  //const [pollData, setPollData] = useState<any>(null);
-  const [isLoadingNow, setIsLoadingNow] = useState(true);
-  //const [errorNow, setErrorNow] = useState<Error | null>(null);
-  const { strategy, isLoading, error, winner } = usePollData(
-    params.poll as Address
-  );
-  const { stakeYes, stakeNo, withdrawFunds, formatAmount, getPollDetails, approveUSDe } = useCapyProtocol();
 
-
-  // // Fetch poll details
-  // React.useEffect(() => {
-  //   const fetchPollDetails = async () => {
-  //     try {
-  //       setIsLoading(true);
-  //       const details = await getPollDetails({ pollAddress });
-  //       setPollData(details);
-  //     } catch (err) {
-  //       setError(err as Error);
-  //       console.error("Error fetching poll details:", err);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   if (pollAddress) {
-  //     fetchPollDetails();
-  //   }
-  // }, [pollAddress, getPollDetails]);
+  const {
+    stakeYes,
+    stakeNo,
+    withdrawFunds,
+    formatAmount,
+    getPollDetails,
+    approveUSDe,
+    strategy: { data: strategy, isLoading, error },
+    winner,
+  } = useCapyProtocol();
 
   const handleStakeYes = async () => {
     if (!stakeAmount) return;
-    
+
     setIsStaking(true);
     try {
       const formattedAmount = formatAmount(stakeAmount);
       const approveTx = await approveUSDe(pollAddress, formattedAmount);
       // Wait for approve transaction
       const approveReceipt = await waitForTransactionReceipt(config, {
-        hash: approveTx
+        hash: approveTx,
       });
       console.log("Approval successful:", approveReceipt.transactionHash);
 
@@ -119,7 +100,7 @@ const Poll = () => {
       console.log("Staking YES successful:", stakeYesReceipt.transactionHash);
       toast.success("Successfully staked YES position");
       setStakeAmount("");
-      
+
       // // Refetch poll details after successful stake
       // const updatedDetails = await getPollDetails({ pollAddress });
       // setPollData(updatedDetails);
@@ -133,14 +114,14 @@ const Poll = () => {
 
   const handleStakeNo = async () => {
     if (!stakeAmount) return;
-    
+
     setIsStaking(true);
     try {
       const formattedAmount = formatAmount(stakeAmount);
       const approveTx = await approveUSDe(pollAddress, formattedAmount);
-        // Wait for approve transaction
+      // Wait for approve transaction
       const approveReceipt = await waitForTransactionReceipt(config, {
-        hash: approveTx
+        hash: approveTx,
       });
       console.log("Approval successful:", approveReceipt.transactionHash);
 
@@ -148,11 +129,11 @@ const Poll = () => {
       const stakeNoReceipt = await waitForTransactionReceipt(config, {
         hash: stakeNoTx,
       });
-      
+
       console.log("Staking NO successful:", stakeNoReceipt.transactionHash);
       toast.success("Successfully staked NO position");
       setStakeAmount("");
-      
+
       // // Refetch poll details after successful stake
       // const updatedDetails = await getPollDetails({ pollAddress });
       // setPollData(updatedDetails);
@@ -169,11 +150,11 @@ const Poll = () => {
     try {
       //const tx = await withdrawFunds({ pollAddress: fund });
       const withdrawTx = await withdrawFunds({ pollAddress: pollAddress });
-    
+
       const withdrawReceipt = await waitForTransactionReceipt(config, {
-        hash: withdrawTx
+        hash: withdrawTx,
       });
-      
+
       console.log("Withdrawal successful:", withdrawReceipt.transactionHash);
       toast.success("Successfully withdrew funds");
     } catch (error) {
@@ -186,10 +167,10 @@ const Poll = () => {
 
   const currentTime = BigInt(Math.floor(Date.now() / 1000));
   const isRegistrationOpen =
-    strategy?.registrationStartTime &&
-    strategy?.registrationEndTime &&
-    currentTime >= strategy.registrationStartTime &&
-    currentTime <= strategy.registrationEndTime;
+    strategy?.pollCreatedTime &&
+    strategy?.pollEndTime &&
+    currentTime >= strategy.pollCreatedTime &&
+    currentTime <= strategy.pollEndTime;
 
   if (!isMounted) return null;
   if (isLoading) {
@@ -207,7 +188,7 @@ const Poll = () => {
       </div>
     );
   }
-  if (!strategy?.strategyAddress) {
+  if (!strategy?.pollAddress) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 mt-32">
         Poll does not exist yet
@@ -226,8 +207,7 @@ const Poll = () => {
                   isValidUrl(strategy?.avatar ?? "")
                     ? strategy?.avatar
                     : `https://avatar.vercel.sh/${
-                        (strategy?.strategyAddress ?? "") +
-                        (strategy?.name ?? "")
+                        (strategy?.pollAddress ?? "") + (strategy?.name ?? "")
                       }`
                 }
                 alt={`${strategy?.name ?? "Poll"} logo`}
@@ -243,41 +223,34 @@ const Poll = () => {
           </div>
 
           <div className=" ">
-            <p className=" text-gray-800">{strategy.description}</p>
-            {!isRegistrationOpen && strategy?.registrationEndTime && (
+            <p className=" text-gray-800">{strategy.rule}</p>
+            {!isRegistrationOpen && strategy?.pollEndTime && (
               <p className="text-sm text-gray-500 mt-2">
                 Registration closed{" "}
                 {formatDistanceToNow(
-                  new Date(Number(strategy.registrationEndTime) * 1000),
+                  new Date(Number(strategy.pollEndTime) * 1000),
                   { addSuffix: true }
                 )}{" "}
                 (ended{" "}
-                {format(
-                  new Date(Number(strategy.registrationEndTime) * 1000),
-                  "PPp"
-                )}
-                )
+                {format(new Date(Number(strategy.pollEndTime) * 1000), "PPp")})
               </p>
             )}
             {isRegistrationOpen &&
-              strategy?.registrationStartTime &&
-              strategy?.registrationEndTime && (
+              strategy?.pollCreatedTime &&
+              strategy?.pollEndTime && (
                 <p className="text-sm text-gray-500 mt-2">
                   Registration open:{" "}
                   {formatDistanceToNow(
-                    new Date(Number(strategy.registrationEndTime) * 1000),
+                    new Date(Number(strategy.pollEndTime) * 1000),
                     { addSuffix: true }
                   )}{" "}
                   remaining (from{" "}
                   {format(
-                    new Date(Number(strategy.registrationStartTime) * 1000),
+                    new Date(Number(strategy.pollCreatedTime) * 1000),
                     "PPp"
                   )}{" "}
                   to{" "}
-                  {format(
-                    new Date(Number(strategy.registrationEndTime) * 1000),
-                    "PPp"
-                  )}
+                  {format(new Date(Number(strategy.pollEndTime) * 1000), "PPp")}
                   )
                 </p>
               )}
@@ -293,12 +266,12 @@ const Poll = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {ellipsisAddress(strategy.strategyAddress)}
+                    {ellipsisAddress(strategy.pollAddress)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Deployed{" "}
                     {formatDistanceToNow(
-                      new Date(strategy.blockTimestamp * 1000),
+                      new Date(Number(strategy.pollCreatedTime)),
                       {
                         addSuffix: true,
                       }
@@ -370,7 +343,7 @@ const Poll = () => {
                   <RadialChart />
                 </div>
                 <div className=" flex  gap-8 ">
-                  <Button 
+                  <Button
                     className="w-full h-12 bg-green-500 hover:bg-green-400"
                     onClick={handleStakeYes}
                     disabled={isStaking || !stakeAmount}
@@ -378,7 +351,7 @@ const Poll = () => {
                     {/* Stake YES */}
                     {isStaking ? "Staking..." : "Stake YES"}
                   </Button>
-                  <Button 
+                  <Button
                     className="w-full h-12 bg-red-500 hover:bg-red-400"
                     onClick={handleStakeNo}
                     disabled={isStaking || !stakeAmount}
@@ -423,7 +396,7 @@ const Poll = () => {
                   </p>
                 </div>
                 <div className=" flex justify-end">
-                  <button 
+                  <button
                     className="bg-[#33CB82] hover:bg-[#33CB82]/80 rounded-[14px] h-[50px] px-4 flex items-center gap-5"
                     onClick={handleWithdraw}
                     disabled={isWithdrawing}
