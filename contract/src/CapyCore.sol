@@ -23,6 +23,8 @@ contract CapyCore is ReentrancyGuard, Ownable {
     address public cloneablePoll;
     /// @notice Address of the template token contract for cloning
     address public cloneableToken;
+    /// @notice USDe fee required for creating a poll
+    uint256 public initialFee;
     /// @notice Protocol fee in basis points (e.g., 100 = 1%)
     uint256 public protocolFee;
     /// @notice Array of all created poll addresses
@@ -73,6 +75,7 @@ contract CapyCore is ReentrancyGuard, Ownable {
         require(_cloneableToken != address(0), "Invalid token address");
         require(_usdeToken != address(0), "Invalid USDe address");
 
+        initialFee = 2 * 10 ** 18;
         cloneablePoll = _cloneablePoll;
         cloneableToken = _cloneableToken;
         usdeToken = _usdeToken;
@@ -80,7 +83,6 @@ contract CapyCore is ReentrancyGuard, Ownable {
     }
 
     /// @notice Creates a new prediction market poll
-    /// @param initialStake Amount of USDe to stake initially
     /// @param question The poll question
     /// @param avatar URL or IPFS hash of the poll avatar
     /// @param description Detailed description of the poll
@@ -91,7 +93,6 @@ contract CapyCore is ReentrancyGuard, Ownable {
     /// @param noTokenSymbol Symbol for the NO token
     /// @return pollAddress Address of the created poll
     function createPoll(
-        uint256 initialStake,
         string memory question,
         string memory avatar,
         string memory description,
@@ -101,7 +102,6 @@ contract CapyCore is ReentrancyGuard, Ownable {
         string memory noTokenName,
         string memory noTokenSymbol
     ) external nonReentrant returns (address pollAddress) {
-        require(initialStake > 0, "Initial stake required");
         require(bytes(question).length > 0, "Empty question");
         require(
             bytes(yesTokenName).length > 0 && bytes(noTokenName).length > 0,
@@ -117,14 +117,14 @@ contract CapyCore is ReentrancyGuard, Ownable {
         );
 
         // Calculate protocol fee and net stake
-        uint256 fee = (initialStake * protocolFee) / 10000;
-        uint256 netStake = initialStake - fee;
+        uint256 fee = (initialFee * protocolFee) / 10000;
+        uint256 netFee = initialFee - fee;
 
         // Transfer USDe from creator
         IERC20(usdeToken).safeTransferFrom(
             msg.sender,
             address(this),
-            initialStake
+            initialFee
         );
 
         // Deploy poll contract
@@ -163,7 +163,7 @@ contract CapyCore is ReentrancyGuard, Ownable {
         );
 
         // Transfer stake to poll
-        IERC20(usdeToken).safeTransfer(pollAddress, netStake);
+        IERC20(usdeToken).safeTransfer(pollAddress, netFee);
 
         polls.push(pollAddress);
         pollDescriptions[pollAddress] = description;
@@ -245,6 +245,14 @@ contract CapyCore is ReentrancyGuard, Ownable {
             }
         }
         return false;
+    }
+
+    /// @notice Sets the initial fee
+    /// @param newFee New fee in USDe tokens
+    function setInitialFee(uint256 newFee) external onlyOwner {
+        uint256 oldFee = initialFee;
+        initialFee = newFee;
+        emit ProtocolFeeUpdated(oldFee, newFee);
     }
 
     /// @notice Sets the protocol fee
