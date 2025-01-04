@@ -50,11 +50,15 @@ import useCapyProtocol from "@/hooks/use-capy-protocol";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { config } from "@/providers/wagmi/config";
 import { parseEther } from "viem";
+import { Textarea } from "../atoms/text-area";
+import capyCore from "@/types/contracts/capy-core";
+
+const CAPY_CORE_ADDRESS = capyCore.address;
 
 const FormSchema = z.object({
   question: z.string().min(1, { message: "Question is required" }),
   avatar: z.string(),
-  description: z.string(),
+  rule: z.string(),
   durationValue: z
     .number()
     .min(1, { message: "Duration must be greater than 0" }),
@@ -65,7 +69,6 @@ const FormSchema = z.object({
     .min(1, { message: "Yes token symbol is required" }),
   noTokenName: z.string().min(1, { message: "No token name is required" }),
   noTokenSymbol: z.string().min(1, { message: "No token symbol is required" }),
-  initialStake: z.string().min(1, { message: "Initial stake is required" }),
 });
 
 const NewPoll = () => {
@@ -81,32 +84,33 @@ const NewPoll = () => {
     defaultValues: {
       question: "",
       avatar: "",
-      description: "",
+      rule: "",
       durationValue: 1,
       durationUnit: "days",
       yesTokenName: "",
       yesTokenSymbol: "",
       noTokenName: "",
       noTokenSymbol: "",
-      initialStake: "",
     },
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!address) {
       throw new Error("Please connect wallet");
-      // toast.error("Please connect wallet");
-      // return;
+      toast.error("Please connect wallet");
+      return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const durationInSeconds = getDurationInSeconds(data.durationValue, data.durationUnit);
-      const initialStakeAmount = formatAmount(data.initialStake);
+      const durationInSeconds = getDurationInSeconds(
+        data.durationValue,
+        data.durationUnit
+      );
 
-      // First approve USDe spending
-      const approveTx = await approveUSDe(address, initialStakeAmount);
+      // First approve USDe spending TODO: check contract for initial fee
+      const approveTx = await approveUSDe(CAPY_CORE_ADDRESS, parseEther("2"));
       const approveReceipt = await waitForTransactionReceipt(config, {
         hash: approveTx,
       });
@@ -114,10 +118,9 @@ const NewPoll = () => {
 
       // Create the poll
       const createPollTx = await createPoll({
-        initialStake: initialStakeAmount,
         question: data.question,
         avatar: data.avatar || "",
-        description: data.description || "",
+        rule: data.rule || "",
         duration: BigInt(durationInSeconds),
         yesTokenName: data.yesTokenName,
         yesTokenSymbol: data.yesTokenSymbol,
@@ -129,7 +132,10 @@ const NewPoll = () => {
         hash: createPollTx,
       });
 
-      console.log("Poll created successfully:", createPollReceipt.transactionHash);
+      console.log(
+        "Poll created successfully:",
+        createPollReceipt.transactionHash
+      );
       toast.success("Poll created successfully!");
       form.reset();
       //setOpen(false);
@@ -192,11 +198,11 @@ const NewPoll = () => {
 
           <FormField
             control={form.control}
-            name="description"
+            name="rule"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Description (optional)" {...field} />
+                  <Textarea placeholder="Rules" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -330,22 +336,6 @@ const NewPoll = () => {
               )}
             />
           </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <FormField
-            control={form.control}
-            name="initialStake"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Initial Stake (USDe)</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="Enter initial stake amount" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <div className="h-6"></div>
