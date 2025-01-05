@@ -21,7 +21,6 @@ import { Button } from "@/components/atoms/button";
 import { Card, CardContent } from "@/components/atoms/card";
 import { toast } from "sonner";
 import useCapyProtocol from "@/hooks/use-capy-protocol-new";
-import { ADMIN_ADDRESS } from "@/constants";
 
 const FormSchema = z.object({
   pollAddress: z.string().startsWith("0x", "Must be a valid address"),
