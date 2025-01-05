@@ -39,17 +39,6 @@ export default function AdminResolvePage() {
     },
   });
 
-  // Check if user is admin
-  if (address !== ADMIN_ADDRESS) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold text-red-500 mb-2">Unauthorized Access</h1>
-        <p className="text-gray-600">Only admin can access this page.</p>
-      </div>
-    );
-  }
-
   const handleResolve = async (winningPosition: boolean) => {
     const values = form.getValues();
     if (!address) {
@@ -74,8 +63,8 @@ export default function AdminResolvePage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50/50">
-      <div className="w-full max-w-2xl px-4">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gray-50/50">
+      <div className="w-full max-w-lg px-4">
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm">
           <CardContent className="p-8">
             <div className="space-y-6">
