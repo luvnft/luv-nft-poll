@@ -49,6 +49,10 @@ type FunctionParams = {
     spender: Hash;
     amount: bigint;
   };
+  resolvePoll: {
+    pollAddress: Hash;
+    winningPosition: boolean;
+  };
 };
 
 interface PredictionMarket {
@@ -538,6 +542,24 @@ const useCapyProtocol = () => {
     dispatch({ type: "UPDATE_PARAMS", payload: updates });
   }, []);
 
+  const resolvePoll = async (params: FunctionParams["resolvePoll"]) => {
+    try {
+      const { request } = await simulateContract(config, {
+        abi: CAPY_POLL_ABI,
+        address: params.pollAddress,
+        functionName: "resolvePoll",
+        args: [params.winningPosition],
+      });
+      const hash = await writeContract(config, request);
+      return waitForTransactionReceipt(config, {
+        hash,
+      });
+    } catch (error) {
+      console.error("Error resolving poll:", error);
+      throw error;
+    }
+  };
+
   return {
     predictionMarkets,
     generalActivity,
@@ -549,6 +571,7 @@ const useCapyProtocol = () => {
     withdrawFunds,
 
     updateParams,
+    resolvePoll,
   };
 };
 
