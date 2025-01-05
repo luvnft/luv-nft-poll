@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/atoms/button";
 import {
@@ -88,6 +89,8 @@ const NewPoll = () => {
     },
   });
 
+  const queryClient = useQueryClient(); // Access the query client
+
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!address) {
       toast.error("Please connect wallet");
@@ -119,7 +122,9 @@ const NewPoll = () => {
     } catch (error) {
       console.error("Error creating poll:", error);
       if (error instanceof Error && error.message.includes("0xe450d38c")) {
-        toast.error("Please fund your wallet with USDe tokens to create a poll");
+        toast.error(
+          "Please fund your wallet with USDe tokens to create a poll"
+        );
       } else {
         toast.error(
           error instanceof Error ? error.message : "Failed to create poll"
@@ -128,6 +133,9 @@ const NewPoll = () => {
     } finally {
       setOpen(false);
       setIsSubmitting(false);
+
+      queryClient.invalidateQueries({ queryKey: ["prediction-markets"] });
+      queryClient.invalidateQueries({ queryKey: ["poll"] });
     }
   };
 

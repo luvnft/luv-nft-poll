@@ -5,6 +5,7 @@ import Header from "@/components/organisms/header";
 import RootProvider from "@/providers";
 import "@/styles/globals.css";
 import { cn } from "@/utils";
+import LowBalanceModal from "../organisms/low-balance";
 
 const urbanist = Urbanist({ subsets: ["latin"], preload: true });
 const mouseMemoirs = Mouse_Memoirs({
@@ -22,6 +23,7 @@ const CoreLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex flex-col w-full">
               <Header />
               {children}
+              <LowBalanceModal />
             </div>
           </RootProvider>
         </main>

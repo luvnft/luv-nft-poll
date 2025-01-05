@@ -270,10 +270,6 @@ const useCapyProtocol = () => {
     return marketsWithDetails;
   }, []);
 
-  const fetchActivity = useCallback(async () => {
-    return [] as Activity[];
-  }, []);
-
   const fetchPoll = useCallback(async () => {
     if (!state.pollAddress) throw new Error("Poll ID required");
 
@@ -403,31 +399,15 @@ const useCapyProtocol = () => {
     };
   }, [state.pollAddress]);
 
-  const fetchPollActivity = useCallback(async () => {
-    if (!state.pollAddress) throw new Error("Poll ID required");
-    return [] as Activity[];
-  }, [state.pollAddress]);
-
   // Queries
   const predictionMarkets = useQuery({
     queryKey: ["prediction-markets", state.marketParams],
     queryFn: fetchMarkets,
   });
 
-  const generalActivity = useQuery({
-    queryKey: ["general-activity", state.activityParams],
-    queryFn: fetchActivity,
-  });
-
   const poll = useQuery({
     queryKey: ["poll", state.pollAddress],
     queryFn: fetchPoll,
-    enabled: !!state.pollAddress,
-  });
-
-  const pollActivity = useQuery({
-    queryKey: ["poll-activity", state.pollAddress, state.pollActivityParams],
-    queryFn: fetchPollActivity,
     enabled: !!state.pollAddress,
   });
 
@@ -540,9 +520,7 @@ const useCapyProtocol = () => {
 
   return {
     predictionMarkets,
-    generalActivity,
     poll,
-    pollActivity,
 
     createPoll,
     stake,
