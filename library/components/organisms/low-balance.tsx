@@ -84,7 +84,7 @@ const LowBalanceModal: React.FC = () => {
           href="https://usde-bridge.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          className="inline-block px-4 py-2 text-white rounded bg-[#33CB82] hover:bg-[#33CB82]/80 transition"
         >
           Go to Faucet
         </a>

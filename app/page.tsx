@@ -52,13 +52,13 @@ const Home = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50  to-transparent"></div>
 
           <div className="absolute inset-0 flex flex-col items-start justify-center px-6 md:px-24 text-white">
-            <div className="w-full md:w-1/2 gap-4 flex flex-col ">
+            <div className="w-full md:w-1/2 gap-6 flex flex-col ">
               <h1 className="text-4xl md:text-6xl font-medium font-mouse">
-                Bet on yourself
+                Predict. Stake. Win – No Loss, All Fun{" "}
               </h1>
               <p className="text-lg md:text-xl font-mono mb-4">
-                Decentralized prediction markets for fearless degenerates.
-                Create, trade, and win on the wildest crypto events.
+                The first no-loss prediction market with memecoins. Stake usde,
+                receive meme tokens, and predict with no risk—powered by memes.{" "}
               </p>
               <NewPoll />
             </div>
@@ -76,7 +76,7 @@ const Home = () => {
               key={market.pollAddress}
               href={`/polls/${market.pollAddress}`}
             >
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden flex flex-col justify-between h-full">
                 <CardHeader>
                   <div className="relative ">
                     <Avatar>
@@ -163,11 +163,21 @@ const Home = () => {
                   key={item.id}
                   className="flex items-center gap-3 justify-between"
                 >
-                  <img
-                    src={item.avatar}
-                    alt=""
-                    className="w-8 h-8 rounded-full"
-                  />
+                  <div className="relative ">
+                    <Avatar>
+                      <AvatarImage
+                        src={
+                          isValidUrl(item.avatar ?? "")
+                            ? item.avatar
+                            : `https://avatar.vercel.sh/${item?.id ?? ""}`
+                        }
+                        alt={`${item.question ?? "Poll"} logo`}
+                      />
+                      <AvatarFallback>
+                        {getInitials(item.user ?? "")}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                   <div className="flex-1">
                     <div className="text-sm mb-1">{item.question}</div>
                     <div className="text-sm">
@@ -196,7 +206,7 @@ const Home = () => {
 
       <div className=" flex items-center justify-center md:w-[calc(100%+12rem)] md:-ml-24 py-20 bg-slate-200 ">
         <Link
-          href="https://github.com/kelvinpraises/capyflow"
+          href="https://github.com/capypolls"
           target="_blank"
           rel="noopener noreferrer"
           className=" border md:text-xl border-[#191A23] font-medium py-5 md:px-9 px-6 rounded-3xl"
