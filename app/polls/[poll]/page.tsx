@@ -29,6 +29,7 @@ import { YesNoChart } from "@/components/organisms/yes-no-chart";
 import useCapyProtocol from "@/hooks/use-capy-protocol-new";
 import { useMounted } from "@/hooks/use-mounted";
 import { ellipsisAddress, getInitials, isValidUrl } from "@/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Poll = () => {
   const params = useParams();
@@ -38,12 +39,15 @@ const Poll = () => {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [stakeAmount, setStakeAmount] = useState(0);
 
-  const { stake, withdrawFunds, poll, updateParams } = useCapyProtocol();
+  const { stake, withdrawFunds, poll, updateParams, addTokenToWallet } =
+    useCapyProtocol();
   const { address } = useAccount();
 
   useEffect(() => {
     updateParams({ pollAddress });
   }, [pollAddress, updateParams]);
+
+  const queryClient = useQueryClient();
 
   const handleStake = async (position: boolean) => {
     if (!address) {
@@ -73,6 +77,11 @@ const Poll = () => {
       toast.error("Failed to stake funds");
     } finally {
       setIsStaking(false);
+
+      if (poll.data) {
+        addTokenToWallet(position ? poll.data.yesToken : poll.data.noToken);
+      }
+      queryClient.refetchQueries({ queryKey: ["poll"] });
     }
   };
 

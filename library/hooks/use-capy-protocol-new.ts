@@ -518,6 +518,7 @@ const useCapyProtocol = () => {
     []
   );
 
+  // helpers
   const updateParams = useCallback((updates: Partial<QueryState>) => {
     dispatch({ type: "UPDATE_PARAMS", payload: updates });
   }, []);
@@ -540,6 +541,32 @@ const useCapyProtocol = () => {
     }
   };
 
+  const addTokenToWallet = async (walletAddress: string) => {
+    if (!window.ethereum) return;
+    try {
+      const symbol = await readContract(config, {
+        address: walletAddress as Hash,
+        abi: erc20Abi,
+        functionName: "symbol",
+        args: [],
+      });
+
+      await window.ethereum.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: {
+            address: walletAddress,
+            symbol: symbol as string,
+            decimals: 18,
+          },
+        },
+      });
+    } catch (err) {
+      console.error("Failed to add token to wallet:", err);
+    }
+  };
+
   return {
     predictionMarkets,
     poll,
@@ -550,6 +577,7 @@ const useCapyProtocol = () => {
 
     updateParams,
     resolvePoll,
+    addTokenToWallet,
   };
 };
 

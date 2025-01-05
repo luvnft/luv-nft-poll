@@ -89,7 +89,7 @@ const NewPoll = () => {
     },
   });
 
-  const queryClient = useQueryClient(); // Access the query client
+  const queryClient = useQueryClient(); 
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!address) {
@@ -135,7 +135,6 @@ const NewPoll = () => {
       setIsSubmitting(false);
 
       queryClient.invalidateQueries({ queryKey: ["prediction-markets"] });
-      queryClient.invalidateQueries({ queryKey: ["poll"] });
     }
   };
 
