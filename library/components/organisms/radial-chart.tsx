@@ -10,34 +10,38 @@ import {
   ChartTooltipContent,
 } from "@/components/atoms/chart";
 
-const chartData = [{ type: "vote", yes: 1260, no: 570 }];
+interface RadialChartProps {
+  data: Array<{
+    type: string;
+    yes: number;
+    no: number;
+  }>;
+}
 
 const chartConfig = {
-  desktop: {
-    label: "no",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
+  yes: {
     label: "yes",
     color: "hsl(var(--chart-2))",
   },
+  no: {
+    label: "no",
+    color: "hsl(var(--chart-1))",
+  },
 } satisfies ChartConfig;
 
-export function RadialChart() {
-  const totalVisitors = chartData[0].no + chartData[0].yes;
+export function RadialChart({ data }: RadialChartProps) {
+  const totalVisitors = data[0].no + data[0].yes;
 
   return (
     <div className="flex flex-col w-2/5">
       <CardContent className="flex items-center pb-0 justify-center">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square w-full max-w-[120px]"
-        >
+        <ChartContainer config={chartConfig} className="w-24 min-h-12 justify-end">
           <RadialBarChart
-            data={chartData}
+            data={data}
             endAngle={180}
-            innerRadius={50}
-            outerRadius={100}
+            innerRadius={40}
+            outerRadius={70}
+            cy="90%"
           >
             <ChartTooltip
               cursor={false}
@@ -51,7 +55,7 @@ export function RadialChart() {
                       <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) - 16}
+                          y={(viewBox.cy || 0) - 14}
                           className="fill-foreground text-sm md:text-base font-bold"
                         >
                           {totalVisitors.toLocaleString()}
@@ -61,7 +65,7 @@ export function RadialChart() {
                           y={(viewBox.cy || 0) + 4}
                           className="fill-muted-foreground"
                         >
-                          Votes
+                          Stakes
                         </tspan>
                       </text>
                     );
@@ -70,17 +74,17 @@ export function RadialChart() {
               />
             </PolarRadiusAxis>
             <RadialBar
-              dataKey="yes"
+              dataKey="no"
+              fill="var(--color-no)"
               stackId="a"
-              cornerRadius={5}
-              fill="var(--color-desktop)"
+              cornerRadius={100}
               className="stroke-transparent stroke-2"
             />
             <RadialBar
-              dataKey="no"
-              fill="var(--color-mobile)"
+              dataKey="yes"
+              fill="var(--color-yes)"
               stackId="a"
-              cornerRadius={5}
+              cornerRadius={100}
               className="stroke-transparent stroke-2"
             />
           </RadialBarChart>

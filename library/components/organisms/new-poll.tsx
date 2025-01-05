@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowDown, Info } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useAccount } from "wagmi";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/atoms/button";
 import {
@@ -37,23 +38,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/atoms/select";
+import { Textarea } from "@/components/atoms/text-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/atoms/tooltip";
+import useCapyProtocol from "@/hooks/use-capy-protocol-new";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useAccount } from "wagmi";
 import { useMounted } from "@/hooks/use-mounted";
-import useCapyProtocol from "@/hooks/use-capy-protocol";
-import { waitForTransactionReceipt } from "wagmi/actions";
-import { config } from "@/providers/wagmi/config";
-import { parseEther } from "viem";
-import { Textarea } from "../atoms/text-area";
-import capyCore from "@/types/contracts/capy-core";
-
-const CAPY_CORE_ADDRESS = capyCore.address;
 
 const FormSchema = z.object({
   question: z.string().min(1, { message: "Question is required" }),
@@ -77,7 +71,7 @@ const NewPoll = () => {
   const [open, setOpen] = useState(false);
   const { address } = useAccount();
   const isMounted = useMounted();
-  const { createPoll, approveUSDe, formatAmount } = useCapyProtocol();
+  const { createPoll } = useCapyProtocol();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -96,7 +90,6 @@ const NewPoll = () => {
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!address) {
-      throw new Error("Please connect wallet");
       toast.error("Please connect wallet");
       return;
     }
@@ -109,15 +102,7 @@ const NewPoll = () => {
         data.durationUnit
       );
 
-      // First approve USDe spending TODO: check contract for initial fee
-      const approveTx = await approveUSDe(CAPY_CORE_ADDRESS, parseEther("2"));
-      const approveReceipt = await waitForTransactionReceipt(config, {
-        hash: approveTx,
-      });
-      console.log("Approval successful:", approveReceipt.transactionHash);
-
-      // Create the poll
-      const createPollTx = await createPoll({
+      await createPoll({
         question: data.question,
         avatar: data.avatar || "",
         rule: data.rule || "",
@@ -128,23 +113,14 @@ const NewPoll = () => {
         noTokenSymbol: data.noTokenSymbol,
       });
 
-      const createPollReceipt = await waitForTransactionReceipt(config, {
-        hash: createPollTx,
-      });
-
-      console.log(
-        "Poll created successfully:",
-        createPollReceipt.transactionHash
-      );
       toast.success("Poll created successfully!");
       form.reset();
-      //setOpen(false);
+      setOpen(false);
     } catch (error) {
       console.error("Error creating poll:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to create poll"
       );
-      //toast.error(error instanceof Error ? error.message : "Failed to create poll");
     } finally {
       setOpen(false);
       setIsSubmitting(false);
