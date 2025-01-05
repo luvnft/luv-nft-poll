@@ -30,8 +30,8 @@ contract CapyCore is ReentrancyGuard, Ownable {
     /// @notice Array of all created poll addresses
     address[] public polls;
 
-    /// @notice Minimum duration for a poll (1 day)
-    uint256 public constant MIN_DURATION = 1 days;
+    /// @notice Minimum duration for a poll (1 minute)
+    uint256 public constant MIN_DURATION = 1 minutes;
     /// @notice Maximum duration for a poll (30 days)
     uint256 public constant MAX_DURATION = 30 days;
     /// @notice Maximum protocol fee (10%)
