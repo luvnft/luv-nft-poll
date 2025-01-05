@@ -8,7 +8,7 @@ import {
 import { format } from "date-fns";
 import ky from "ky";
 import { useCallback, useReducer } from "react";
-import { Hash, erc20Abi, formatEther, parseEther, parseUnits } from "viem";
+import { Hash, erc20Abi, formatEther, parseUnits } from "viem";
 
 import { config } from "@/providers/wagmi/config";
 import capyCore from "@/types/contracts/capy-core";
@@ -19,7 +19,8 @@ const CAPY_CORE_ABI = capyCore.abi;
 const USDE_TOKEN_ADDRESS = "0x9E1eF5A92C9Bf97460Cd00C0105979153EA45b27";
 const CAPY_CORE_ADDRESS = capyCore.address;
 
-const SUBGRAPH_URL = "http://localhost:8000/subgraphs/name/capypolls-subgraph";
+const SUBGRAPH_URL =
+  "https://api.goldsky.com/api/public/project_cm5jmcfrvjkpm01x8hfx55o9q/subgraphs/capypolls-subgraph/1.0.0/gn";
 
 type FunctionParams = {
   createPoll: {
