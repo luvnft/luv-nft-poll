@@ -118,9 +118,13 @@ const NewPoll = () => {
       setOpen(false);
     } catch (error) {
       console.error("Error creating poll:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create poll"
-      );
+      if (error instanceof Error && error.message.includes("0xe450d38c")) {
+        toast.error("Please fund your wallet with USDe tokens to create a poll");
+      } else {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to create poll"
+        );
+      }
     } finally {
       setOpen(false);
       setIsSubmitting(false);

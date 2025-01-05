@@ -64,6 +64,11 @@ const Poll = () => {
         `Successfully staked ${stakeAmount} USDe for ${position ? "YES" : "NO"}`
       );
     } catch (error) {
+      if (error instanceof Error && error.message.includes("0xe450d38c")) {
+        toast.error(
+          "Please fund your wallet with USDe tokens to create a poll"
+        );
+      }
       console.error("Error staking:", error);
       toast.error("Failed to stake funds");
     } finally {

@@ -9,7 +9,8 @@ export const config = createConfig(
     appName: "capypolls",
     walletConnectProjectId:
       process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-    chains: isDev ? [anvil] : [opBNBTestnet],
+    chains: [opBNBTestnet],
+    // chains: isDev ? [anvil] : [opBNBTestnet],
     multiInjectedProviderDiscovery: true,
     transports: {
       [anvil.id]: http(),
