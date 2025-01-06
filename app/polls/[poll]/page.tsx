@@ -370,11 +370,20 @@ const Poll = () => {
                   key={item.id}
                   className="flex items-center gap-3 justify-between"
                 >
-                  <img
-                    src={item.avatar}
-                    alt=""
-                    className="w-8 h-8 rounded-full"
-                  />
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage
+                      src={
+                        isValidUrl(item?.avatar ?? "")
+                          ? item?.avatar
+                          : `https://avatar.vercel.sh/${item?.user ?? ""}`
+                      }
+                      alt={`${item?.user ?? "Poll"} logo`}
+                    />
+                    <AvatarFallback>
+                      {getInitials(item?.user ?? "")}
+                    </AvatarFallback>
+                  </Avatar>
+              
                   <div className="flex-1">
                     <div className="text-sm">
                       <span className="font-medium">{item.user}</span>{" "}
