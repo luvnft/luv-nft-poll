@@ -48,7 +48,7 @@ CapyPolls revolutionizes prediction markets through:
    - Experience no-loss prediction markets
 
 2. **Smart Contracts**
-   - [CapyCore Contract](https://testnet.opbnbscan.com/address/0x97303aD8246367979eC596Fb29fc68253B9FCa73)
+   - [CapyCore Contract](https://testnet.opbnbscan.com/address/0x85bdC135Bc56C3707551E9FEa8c5d7e31C82d16a)
    - Deployed on opBNB Testnet
    - Fully transparent and verifiable
 
