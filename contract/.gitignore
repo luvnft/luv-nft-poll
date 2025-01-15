@@ -1,15 +1,16 @@
-# Compiler files
-cache/
-out/
+# Build results
+/target
+/schema
 
-# Ignores development broadcast logs
-!/broadcast
-/broadcast/*/31337/
-/broadcast/**/dry-run/
-broadcast
+# Cargo+Git helper file (https://github.com/rust-lang/cargo/blob/0.44.1/src/cargo/sources/git/utils.rs#L320-L327)
+.cargo-ok
 
-# Docs
-docs/
+# Text file backups
+**/*.rs.bk
 
-# Dotenv file
-.env
+# macOS
+.DS_Store
+
+# IDEs
+*.iml
+.idea
