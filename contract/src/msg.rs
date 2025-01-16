@@ -7,6 +7,8 @@ pub struct InstantiateMsg {
     pub token_code_id: u64,
     pub usde_token: String,
     pub susde_token: String,
+    pub initial_fee: Uint128,
+    pub protocol_fee: u64, // basis points (e.g., 100 = 1%)
 }
 
 #[cw_serde]
@@ -27,24 +29,55 @@ pub enum ExecuteMsg {
         initial_fee: Option<Uint128>,
         protocol_fee: Option<u64>,
     },
+    WithdrawFees {
+        to: String,
+    },
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    //  // GetCount returns the current count as a json-encoded number
-    //  #[returns(GetCountResponse)]
-    //  GetCount {},
     #[returns(ConfigResponse)]
     Config {},
     #[returns(PollResponse)]
     Poll { address: String },
     #[returns(PollsResponse)]
-    Polls { start_after: Option<String>, limit: Option<u32> },
+    Polls { 
+        start_after: Option<String>, 
+        limit: Option<u32> 
+    },
 }
 
-// We define a custom struct for each query response
 #[cw_serde]
-pub struct GetCountResponse {
-    pub count: i32,
+pub struct ConfigResponse {
+    pub owner: Addr,
+    pub poll_code_id: u64,
+    pub token_code_id: u64,
+    pub usde_token: Addr,
+    pub susde_token: Addr,
+    pub initial_fee: Uint128,
+    pub protocol_fee: u64,
+}
+
+#[cw_serde]
+pub struct PollResponse {
+    pub exists: bool,
+    pub description: Option<String>,
+    pub yes_token: Option<Addr>,
+    pub no_token: Option<Addr>,
+    pub end_timestamp: Option<u64>,
+    pub total_staked: Option<Uint128>,
+}
+
+#[cw_serde]
+pub struct PollsResponse {
+    pub polls: Vec<PollDetail>,
+}
+
+#[cw_serde]
+pub struct PollDetail {
+    pub address: Addr,
+    pub description: String,
+    pub yes_token: Addr,
+    pub no_token: Addr,
 }
