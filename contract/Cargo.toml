@@ -6,6 +6,20 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = [
+    "core",
+    "poll",
+    "token"
+]
+
+[workspace.dependencies]
+cosmwasm-std = "1.5"
+cosmwasm-schema = "1.5"
+cw-storage-plus = "1.2"
+cw20 = "1.1"
+
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -43,6 +57,10 @@ cw2 = "2.0.0"
 schemars = "0.8.16"
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.58" }
+
+xion-capypolls-core = { path = "./core" }
+xion-capypolls-poll = { path = "./poll" }
+xion-capypolls-token = { path = "./token" }
 
 [dev-dependencies]
 cw-multi-test = "2.0.0"
