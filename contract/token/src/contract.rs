@@ -6,6 +6,7 @@ use cw20_base::contract::{
 };
 use cw20_base::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use cw2::set_contract_version;
+use cw20_base::ContractError;
 use cw_ownable::{initialize_owner, assert_owner};
 
 const CONTRACT_NAME: &str = "crates.io:xion-capyflows-token";
@@ -17,7 +18,7 @@ pub fn instantiate(
     env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     
     // Initialize owner (poll contract)
@@ -33,18 +34,17 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> StdResult<Response> {
-    //cw20_execute(deps, env, info, msg)
+) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { recipient, amount } => {
             // Only owner (poll contract) can mint
-            assert_owner(deps.storage, &info.sender)?;
+            let _ = assert_owner(deps.storage, &info.sender);
             execute_mint(deps, env, info, recipient, amount)
         }
         ExecuteMsg::Burn { amount } => {
             // Only owner (poll contract) can burn
-            assert_owner(deps.storage, &info.sender)?;
-            execute_burn(deps, env, info, info.sender.to_string(), amount)
+            let _ = assert_owner(deps.storage, &info.sender);
+            execute_burn(deps, env, info.clone(), info.sender.to_string(), amount)
         }
         _ => cw20_execute(deps, env, info, msg),
     }
@@ -56,7 +56,7 @@ pub fn execute_mint(
     info: MessageInfo,
     recipient: String,
     amount: Uint128,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     cw20_execute(
         deps,
         env,
@@ -71,7 +71,7 @@ pub fn execute_burn(
     info: MessageInfo,
     from: String,
     amount: Uint128,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     cw20_execute(
         deps,
         env,
@@ -81,29 +81,33 @@ pub fn execute_burn(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: &QueryMsg) -> Result<Binary, ContractError> {
     //cw20_query(deps, env, msg)
+ 
     match msg {
         QueryMsg::TokenInfo {} => {
-            let res = cw20_query(deps, env, msg)?;
+            let res = cw20_query(deps, env, msg.clone())?;
             Ok(res)
         }
         QueryMsg::Balance { address } => {
-            let res = cw20_query(deps, env, msg)?;
+            let res = cw20_query(deps, env, msg.clone())?;
             Ok(res)
         }
-        _ => cw20_query(deps, env, msg),
+        _ => {
+            let res = cw20_query(deps, env, msg.clone())?;
+            Ok(res)
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, Addr};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{coins, Addr, OwnedDeps};
     use cw20::{Cw20Coin, TokenInfoResponse};
 
-    fn setup_contract() -> (cosmwasm_std::OwnedDeps<_, _, _>, Addr) {
+    fn setup_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, Addr) {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             name: "Test Token".to_string(),
@@ -132,14 +136,13 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        //let deps = setup_contract();
-        let (deps, owner) = setup_contract();
+        let (mut deps, owner) = setup_contract();
         
         // Test token info query
         let res = query(
             deps.as_ref(),
             mock_env(),
-            QueryMsg::TokenInfo {},
+            &QueryMsg::TokenInfo {},
         ).unwrap();
         //let token_info: cw20::TokenInfoResponse = from_binary(&res).unwrap();
         let token_info: TokenInfoResponse = from_binary(&res).unwrap();
@@ -161,7 +164,7 @@ mod tests {
         let res = query(
             deps.as_ref(),
             mock_env(),
-            QueryMsg::Balance {
+            &QueryMsg::Balance {
                 address: "recipient".to_string(),
             },
         ).unwrap();
@@ -171,7 +174,7 @@ mod tests {
 
     #[test]
     fn test_unauthorized_mint() {
-        let (deps, _) = setup_contract();
+        let (mut deps, _) = setup_contract();
         
         // Try to mint from unauthorized account
         let mint_msg = ExecuteMsg::Mint {
