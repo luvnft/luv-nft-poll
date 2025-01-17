@@ -1542,6 +1542,8 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror 1.0.69",
+ "xion-capypolls-poll",
+ "xion-capypolls-token",
 ]
 
 [[package]]

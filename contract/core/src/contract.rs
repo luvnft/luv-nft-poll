@@ -11,7 +11,7 @@ use crate::{
         ConfigResponse, ExecuteMsg, InstantiateMsg, PollCountResponse, PollDetailsResponse, PollResponse,
         QueryMsg,
     },
-    state::{Config, PollInfo, TempPollData, CONFIG, POLL_COUNT, POLLS, TEMP_POLL_DATA},
+    state::{Config, PollInfo, TempPollData, CONFIG, POLLS, POLL_COUNT, POLL_SEQUENCE, TEMP_POLL_DATA},
 };
 
 const CONTRACT_NAME: &str = "crates.io:xion-capyflows-core";
@@ -103,7 +103,7 @@ pub fn execute(
         }
         ExecuteMsg::SetInitialFee { new_fee } => execute_set_initial_fee(deps, info, new_fee),
         ExecuteMsg::SetProtocolFee { new_fee } => execute_set_protocol_fee(deps, info, new_fee),
-        ExecuteMsg::WithdrawFees { to } => execute_withdraw_fees(deps, info, to),
+        ExecuteMsg::WithdrawFees { to } => execute_withdraw_fees(deps, env, info, to),
     }
 }
 
@@ -213,7 +213,7 @@ pub fn execute_create_poll(
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg.id {
         REPLY_YES_TOKEN_INIT => handle_yes_token_reply(deps, msg),
-        REPLY_NO_TOKEN_INIT => handle_no_token_reply(deps, msg),
+        REPLY_NO_TOKEN_INIT => handle_no_token_reply(deps, _env, msg),
         REPLY_POLL_INIT => handle_poll_reply(deps, msg),
         id => Err(ContractError::UnknownReplyId { id }),
     }
@@ -272,7 +272,7 @@ fn handle_yes_token_reply(deps: DepsMut, msg: Reply) -> Result<Response, Contrac
     Ok(Response::new().add_submessage(no_token_instantiate))
 }
 
-fn handle_no_token_reply(deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {
+fn handle_no_token_reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let mut temp_data = TEMP_POLL_DATA.load(deps.storage)?;
     
@@ -308,12 +308,12 @@ fn handle_no_token_reply(deps: DepsMut, msg: Reply) -> Result<Response, Contract
         WasmMsg::Instantiate {
             admin: Some(temp_data.creator.to_string()),
             code_id: config.poll_code_id,
-            msg: to_binary(&xion_capyflows_poll::msg::InstantiateMsg {
+            msg: to_binary(&xion_capypolls_poll::msg::InstantiateMsg {
                 capy_core: env.contract.address.to_string(),
                 poll_creator: temp_data.creator.to_string(),
                 usde_token: config.usde_token.to_string(),
                 susde_token: config.susde_token.to_string(),
-                duration: 1000, // TODO: Get from temp data
+                duration: temp_data.duration,
                 yes_token: temp_data.yes_token.unwrap().to_string(),
                 no_token: temp_data.no_token.unwrap().to_string(),
             })?,
@@ -351,6 +351,9 @@ fn handle_poll_reply(deps: DepsMut, msg: Reply) -> Result<Response, ContractErro
         // question: temp_data.question,
         // avatar: temp_data.avatar,
         // description: temp_data.description,
+        // yes_token: temp_data.yes_token.unwrap(),
+        // no_token: temp_data.no_token.unwrap(),
+        // poll_addr: poll_addr.clone(),
         creator: temp_data.creator.clone(),
         question: temp_data.question.clone(),
         avatar: temp_data.avatar.clone(),
@@ -518,6 +521,7 @@ pub fn execute_set_protocol_fee(
 
 pub fn execute_withdraw_fees(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     to: String,
 ) -> Result<Response, ContractError> {
@@ -617,10 +621,11 @@ fn query_poll_details(deps: Deps, poll_address: String) -> StdResult<PollDetails
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::coins;
+    use cosmwasm_std::{
+        coins, testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier}, Api, MemoryStorage, OwnedDeps
+    };
 
-    fn setup_contract() -> (cosmwasm_std::OwnedDeps<_, _, _>, Env) {
+    fn setup_contract() -> (OwnedDeps<MemoryStorage, MockApi, MockQuerier>, cosmwasm_std::Env) {
         let mut deps = mock_dependencies();
         let env = mock_env();
         let info = mock_info("creator", &coins(1000, "earth"));
