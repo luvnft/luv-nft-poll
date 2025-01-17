@@ -3,33 +3,25 @@
 import { formatDistanceToNow } from "date-fns";
 import { ArrowDown, Loader, Timer } from "lucide-react";
 import Link from "next/link";
+import { Abstraxion, useAbstraxion, useAccount } from "@burnt-labs/abstraxion";
+import { useXionProtocol } from "@/library/hooks/use-xion-protocol";
+import { PredictionMarket, RecentActivity } from "@/library/types/prediction-market";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/library/components/atoms/avatar";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/atoms/card";
-import NewPoll from "@/components/organisms/new-poll";
-import useCapyProtocol from "@/hooks/use-capy-protocol-new";
-import { useMounted } from "@/hooks/use-mounted";
-import { getInitials, isValidUrl } from "@/utils";
-
-type ActivityItem = {
-  id: string;
-  question: string;
-  user: string;
-  action: "staked";
-  choice: "Yes" | "No";
-  price: number;
-  amount: number;
-  timestamp: Date;
-  avatar?: string;
-};
+} from "@/library/components/atoms/card";
+import NewPoll from "@/library/components/organisms/new-poll";
+import { useMounted } from "@/library/hooks/use-mounted";
+import { getInitials, isValidUrl } from "@/library/utils";
 
 const Home = () => {
-  const { predictionMarkets } = useCapyProtocol();
+  const { predictionMarkets } = useXionProtocol();
+  const { isConnected } = useAccount();
+  const { openAbstraxion } = useAbstraxion();
   const isMounted = useMounted();
 
   if (!isMounted) {
@@ -42,34 +34,41 @@ const Home = () => {
   }
 
   return (
-    <div className="px-4 md:px-24 flex flex-col  overflow-hidden gap-20">
-      <div className=" flex flex-col gap-6 relative ">
-        <div className="relative h-[60vh] md:w-[calc(100%+12rem)] md:-ml-24 ">
+    <div className="px-4 md:px-24 flex flex-col overflow-hidden gap-20">
+      <div className="flex flex-col gap-6 relative">
+        <div className="relative h-[60vh] md:w-[calc(100%+12rem)] md:-ml-24">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url('/hero.png')" }}
           ></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50  to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
 
           <div className="absolute inset-0 flex flex-col items-start justify-center px-6 md:px-24 text-white">
-            <div className="w-full md:w-1/2 gap-6 flex flex-col ">
+            <div className="w-full md:w-1/2 gap-6 flex flex-col">
               <h1 className="text-4xl md:text-6xl font-medium font-mouse">
                 Predict. Stake. Win – No Loss, All Fun{" "}
               </h1>
               <p className="text-lg md:text-xl font-mono mb-4">
-                The first no-loss prediction market with memecoins. Stake usde,
+                The first no-loss prediction market with memecoins. Stake USDE,
                 receive meme tokens, and predict with no risk—powered by memes.{" "}
               </p>
-              <NewPoll />
+              {isConnected ? (
+                <NewPoll />
+              ) : (
+                <button
+                  onClick={openAbstraxion}
+                  className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:bg-[#33CB82]/80 transition-colors duration-200"
+                >
+                  Connect Wallet
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className=" flex flex-col items-center mt-8" id="polls">
-        <h2 className=" text-xl md:text-5xl font-medium mb-8 ">
-          Polls for you
-        </h2>
+      <div className="flex flex-col items-center mt-8" id="polls">
+        <h2 className="text-xl md:text-5xl font-medium mb-8">Polls for you</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {predictionMarkets.data?.map((market) => (
             <Link
@@ -78,7 +77,7 @@ const Home = () => {
             >
               <Card className="overflow-hidden flex flex-col justify-between h-full">
                 <CardHeader>
-                  <div className="relative ">
+                  <div className="relative">
                     <Avatar>
                       <AvatarImage
                         src={
@@ -150,7 +149,7 @@ const Home = () => {
       </div>
 
       <div className="flex items-center justify-center">
-        <div className=" w-2/3">
+        <div className="w-2/3">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Recent Activity</h2>
           </div>
@@ -163,7 +162,7 @@ const Home = () => {
                   key={item.id}
                   className="flex items-center gap-3 justify-between"
                 >
-                  <div className="relative ">
+                  <div className="relative">
                     <Avatar>
                       <AvatarImage
                         src={
@@ -204,16 +203,18 @@ const Home = () => {
         </div>
       </div>
 
-      <div className=" flex items-center justify-center md:w-[calc(100%+12rem)] md:-ml-24 py-20 bg-slate-200 ">
+      <div className="flex items-center justify-center md:w-[calc(100%+12rem)] md:-ml-24 py-20 bg-slate-200">
         <Link
           href="https://github.com/capypolls"
           target="_blank"
           rel="noopener noreferrer"
-          className=" border md:text-xl border-[#191A23] font-medium py-5 md:px-9 px-6 rounded-3xl"
+          className="border md:text-xl border-[#191A23] font-medium py-5 md:px-9 px-6 rounded-3xl"
         >
           GitHub Repository
         </Link>
       </div>
+
+      <Abstraxion />
     </div>
   );
 };
