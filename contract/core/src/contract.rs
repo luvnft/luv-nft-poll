@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, SubMsg,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, SubMsg,
     Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -14,7 +14,7 @@ use crate::{
     state::{Config, PollInfo, TempPollData, CONFIG, POLLS, POLL_COUNT, POLL_SEQUENCE, TEMP_POLL_DATA},
 };
 
-const CONTRACT_NAME: &str = "crates.io:xion-capyflows-core";
+const CONTRACT_NAME: &str = "crates.io:xion-capypolls-core";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const MIN_DURATION: u64 = 60; // 1 minute
@@ -144,7 +144,7 @@ pub fn execute_create_poll(
     // Collect initial fee
     let transfer_msg = WasmMsg::Execute {
         contract_addr: config.usde_token.to_string(),
-        msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
+        msg: to_json_binary(&Cw20ExecuteMsg::TransferFrom {
             owner: info.sender.to_string(),
             recipient: env.contract.address.to_string(),
             amount: config.initial_fee,
@@ -190,7 +190,7 @@ pub fn execute_create_poll(
         WasmMsg::Instantiate {
             admin: Some(info.sender.to_string()),
             code_id: config.token_code_id,
-            msg: to_binary(&yes_token_init)?,
+            msg: to_json_binary(&yes_token_init)?,
             funds: vec![],
             label: format!("YES Token for Poll {}", question),
         },
@@ -262,7 +262,7 @@ fn handle_yes_token_reply(deps: DepsMut, msg: Reply) -> Result<Response, Contrac
         WasmMsg::Instantiate {
             admin: Some(temp_data.creator.to_string()),
             code_id: config.token_code_id,
-            msg: to_binary(&no_token_init)?,
+            msg: to_json_binary(&no_token_init)?,
             funds: vec![],
             label: format!("NO Token for Poll {}", temp_data.question),
         },
@@ -308,7 +308,7 @@ fn handle_no_token_reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response
         WasmMsg::Instantiate {
             admin: Some(temp_data.creator.to_string()),
             code_id: config.poll_code_id,
-            msg: to_binary(&xion_capypolls_poll::msg::InstantiateMsg {
+            msg: to_json_binary(&xion_capypolls_poll::msg::InstantiateMsg {
                 capy_core: env.contract.address.to_string(),
                 poll_creator: temp_data.creator.to_string(),
                 usde_token: config.usde_token.to_string(),
@@ -531,7 +531,9 @@ pub fn execute_withdraw_fees(
     }
 
     let to_addr = deps.api.addr_validate(&to)?;
-    let balance = deps.querier.query_wasm_smart(
+    
+    // Query balance with explicit type
+    let balance_response: cw20::BalanceResponse = deps.querier.query_wasm_smart(
         config.usde_token.clone(),
         &cw20::Cw20QueryMsg::Balance {
             address: env.contract.address.to_string(),
@@ -540,9 +542,9 @@ pub fn execute_withdraw_fees(
 
     let transfer_msg = WasmMsg::Execute {
         contract_addr: config.usde_token.to_string(),
-        msg: to_binary(&Cw20ExecuteMsg::Transfer {
+        msg: to_json_binary(&cw20::Cw20ExecuteMsg::Transfer {
             recipient: to_addr.to_string(),
-            amount: balance,
+            amount: balance_response.balance,
         })?,
         funds: vec![],
     };
@@ -551,20 +553,20 @@ pub fn execute_withdraw_fees(
         .add_message(transfer_msg)
         .add_attribute("action", "withdraw_fees")
         .add_attribute("to", to)
-        .add_attribute("amount", balance))
+        .add_attribute("amount", balance_response.balance))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetConfig {} => to_binary(&query_config(deps)?),
-        QueryMsg::GetPollCount {} => to_binary(&query_poll_count(deps)?),
-        QueryMsg::GetPollAt { index } => to_binary(&query_poll_at(deps, index)?),
+        QueryMsg::GetConfig {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::GetPollCount {} => to_json_binary(&query_poll_count(deps)?),
+        QueryMsg::GetPollAt { index } => to_json_binary(&query_poll_at(deps, index)?),
         QueryMsg::IsPollFromFactory { poll_address } => {
-            to_binary(&query_is_poll_from_factory(deps, poll_address)?)
+            to_json_binary(&query_is_poll_from_factory(deps, poll_address)?)
         }
         QueryMsg::GetPollDetails { poll_address } => {
-            to_binary(&query_poll_details(deps, poll_address)?)
+            to_json_binary(&query_poll_details(deps, poll_address)?)
         }
     }
 }
@@ -621,14 +623,19 @@ fn query_poll_details(deps: Deps, poll_address: String) -> StdResult<PollDetails
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{
-        coins, testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier}, Api, MemoryStorage, OwnedDeps
-    };
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{coins, from_json, Addr, Api, ContractResult, CosmosMsg, OwnedDeps, SystemResult, Uint128};
 
-    fn setup_contract() -> (OwnedDeps<MemoryStorage, MockApi, MockQuerier>, cosmwasm_std::Env) {
+    fn setup_contract() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
-        let env = mock_env();
-        let info = mock_info("creator", &coins(1000, "earth"));
+
+        // Mock contract address validation
+        deps.querier.update_wasm(|query| match query {
+            cosmwasm_std::WasmQuery::Smart { contract_addr: _, msg: _ } => {
+                SystemResult::Ok(ContractResult::Ok(to_json_binary(&true).unwrap()))
+            },
+            _ => panic!("Unexpected query"),
+        });
 
         let msg = InstantiateMsg {
             usde_token: "usde_token".to_string(),
@@ -638,14 +645,18 @@ mod tests {
             poll_code_id: 1,
             token_code_id: 2,
         };
+        let info = mock_info("creator", &coins(2, "token"));
 
-        instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
-        (deps, env)
+        // we can just call .unwrap() to assert this was a success
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        deps
     }
 
     #[test]
     fn proper_initialization() {
-        let (deps, _) = setup_contract();
+        let deps = setup_contract();
         
         let config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(config.owner, deps.api.addr_validate("creator").unwrap());
@@ -653,8 +664,132 @@ mod tests {
         assert_eq!(config.susde_token, deps.api.addr_validate("susde_token").unwrap());
         assert_eq!(config.initial_fee, Uint128::new(1000000));
         assert_eq!(config.protocol_fee, 100);
-        assert_eq!(config.max_protocol_fee, MAX_PROTOCOL_FEE);
         assert_eq!(config.poll_code_id, 1);
         assert_eq!(config.token_code_id, 2);
+    }
+
+    #[test]
+    fn test_create_poll() {
+        let mut deps = setup_contract();
+        
+        // Mock USDE balance and transfer
+        deps.querier.update_wasm(|query| match query {
+            cosmwasm_std::WasmQuery::Smart { contract_addr: _, msg } => {
+                SystemResult::Ok(ContractResult::Ok(to_json_binary(&true).unwrap()))
+            },
+            _ => panic!("Unexpected query"),
+        });
+
+        let info = mock_info("creator", &coins(2, "token"));
+        let msg = ExecuteMsg::CreatePoll {
+            question: "Test Poll?".to_string(),
+            avatar: "avatar_url".to_string(),
+            description: "Test Description".to_string(),
+            yes_token_name: "YES".to_string(),
+            yes_token_symbol: "YES".to_string(),
+            no_token_name: "NO".to_string(),
+            no_token_symbol: "NO".to_string(),
+            duration: 1000,
+        };
+
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        
+        // Should have messages for fee transfer and token creation
+        assert_eq!(2, res.messages.len());
+        
+        // Verify temp data was saved
+        let temp_data = TEMP_POLL_DATA.load(deps.as_ref().storage).unwrap();
+        assert_eq!(temp_data.question, "Test Poll?");
+        assert_eq!(temp_data.duration, 1000);
+    }
+
+    #[test]
+    fn test_update_config() {
+        let mut deps = setup_contract();
+        let info = mock_info("creator", &coins(2, "token"));
+
+        // Test update poll code id
+        let msg = ExecuteMsg::UpdatePollCodeId { code_id: 5 };
+        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        let config = CONFIG.load(deps.as_ref().storage).unwrap();
+        assert_eq!(config.poll_code_id, 5);
+
+        // Test unauthorized
+        let unauth_info = mock_info("anyone", &coins(2, "token"));
+        let msg = ExecuteMsg::UpdatePollCodeId { code_id: 10 };
+        let err = execute(deps.as_mut(), mock_env(), unauth_info, msg).unwrap_err();
+        assert_eq!(err.to_string(), ContractError::Unauthorized {}.to_string());
+    }
+
+    #[test]
+    fn test_query_config() {
+        let deps = setup_contract();
+
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetConfig {}).unwrap();
+        let config: ConfigResponse = from_json(&res).unwrap();
+        
+        assert_eq!(config.owner, "creator");
+        assert_eq!(config.usde_token, "usde_token");
+        assert_eq!(config.initial_fee, Uint128::new(1000000));
+        assert_eq!(config.protocol_fee, 100);
+    }
+
+    #[test]
+    fn test_query_poll_count() {
+        let deps = setup_contract();
+
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetPollCount {}).unwrap();
+        let count: PollCountResponse = from_json(&res).unwrap();
+        
+        assert_eq!(count.count, 0);
+    }
+
+    #[test]
+    fn test_withdraw_fees() {
+        let mut deps = setup_contract();
+        
+        // Mock USDE balance query with proper binary format
+        deps.querier.update_wasm(|query| match query {
+            cosmwasm_std::WasmQuery::Smart { contract_addr: _, msg } => {
+                match from_json::<cw20::Cw20QueryMsg>(&msg) {
+                    Ok(cw20::Cw20QueryMsg::Balance { address: _ }) => {
+                        let balance_response = cw20::BalanceResponse {
+                            balance: Uint128::new(1000000),
+                        };
+                        SystemResult::Ok(ContractResult::Ok(to_json_binary(&balance_response).unwrap()))
+                    },
+                    _ => SystemResult::Ok(ContractResult::Ok(to_json_binary(&true).unwrap())),
+                }
+            },
+            _ => panic!("Unexpected query"),
+        });
+
+        let info = mock_info("creator", &coins(2, "token"));
+        let msg = ExecuteMsg::WithdrawFees {
+            to: "recipient".to_string(),
+        };
+
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        
+        // Should have transfer message
+        assert_eq!(1, res.messages.len());
+        
+        // Verify the transfer message
+        match &res.messages[0].msg {
+            CosmosMsg::Wasm(WasmMsg::Execute { contract_addr: _, msg, funds }) => {
+                assert_eq!(funds.len(), 0);
+                let decoded: cw20::Cw20ExecuteMsg = from_json(msg).unwrap();
+                match decoded {
+                    cw20::Cw20ExecuteMsg::Transfer { recipient, amount } => {
+                        assert_eq!(recipient, "recipient");
+                        assert_eq!(amount, Uint128::new(1000000));
+                    },
+                    _ => panic!("Wrong message type"),
+                }
+            },
+            _ => panic!("Wrong message type"),
+        }
     }
 } 

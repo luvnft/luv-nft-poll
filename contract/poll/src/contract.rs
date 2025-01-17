@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, SubMsg, Uint128, Api
+    entry_point, to_json_binary, Addr, Api, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, SubMsg, Uint128, SystemResult, ContractResult
 };
 use cw2::set_contract_version;
 use cw20::{Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -242,7 +242,7 @@ pub fn execute_stake(
     // Transfer USDE tokens from user to contract
     let transfer_msg = WasmMsg::Execute {
         contract_addr: config.usde_token.to_string(),
-        msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
+        msg: to_json_binary(&Cw20ExecuteMsg::TransferFrom {
             owner: info.sender.to_string(),
             recipient: env.contract.address.to_string(),
             amount,
@@ -403,13 +403,13 @@ pub fn execute_resolve_poll(
 pub fn query(deps: Deps, _env: Env, msg: PollQueryMsg) -> StdResult<Binary> {
     match msg {
         PollQueryMsg::GetEpochInfo { epoch_number } => {
-            to_binary(&query_epoch_info(deps, epoch_number)?)
+            to_json_binary(&query_epoch_info(deps, epoch_number)?)
         }
         PollQueryMsg::GetUserStakesForEpoch {
             user,
             epoch_number,
-        } => to_binary(&query_user_stakes(deps, user, epoch_number)?),
-        PollQueryMsg::GetPollInfo {} => to_binary(&query_poll_info(deps)?),
+        } => to_json_binary(&query_user_stakes(deps, user, epoch_number)?),
+        PollQueryMsg::GetPollInfo {} => to_json_binary(&query_poll_info(deps)?),
     }
 }
 
@@ -474,7 +474,7 @@ fn create_mint_msg(token: &Addr, recipient: &Addr, amount: Uint128) -> StdResult
     };
     Ok(WasmMsg::Execute {
         contract_addr: token.to_string(),
-        msg: to_binary(&msg)?,
+        msg: to_json_binary(&msg)?,
         funds: vec![],
     }
     .into())
@@ -514,13 +514,19 @@ fn implement_blitz(deps: DepsMut, env: Env, config: &PollConfig) -> Result<Respo
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier};
-    use cosmwasm_std::{coins, MemoryStorage, OwnedDeps};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{coins, from_json, Addr, OwnedDeps, SystemError, Uint128};
 
-    fn setup_contract() -> (OwnedDeps<MemoryStorage, MockApi, MockQuerier>, cosmwasm_std::Env) {
+    fn setup_contract() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
-        let env = mock_env();
-        let info = mock_info("creator", &coins(1000, "earth"));
+
+        // Mock contract address validation
+        deps.querier.update_wasm(|query| match query {
+            cosmwasm_std::WasmQuery::Smart { contract_addr: _, msg: _ } => {
+                SystemResult::Ok(ContractResult::Ok(to_json_binary(&true).unwrap()))
+            },
+            _ => panic!("Unexpected query"),
+        });
 
         let msg = PollInstantiateMsg {
             capy_core: "capy_core".to_string(),
@@ -531,15 +537,31 @@ mod tests {
             yes_token: "yes_token".to_string(),
             no_token: "no_token".to_string(),
         };
+        let info = mock_info("creator", &coins(2, "token"));
+        let env = mock_env();
 
-        instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
-        (deps, env)
+        // Initialize contract
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // Initialize first epoch
+        EPOCHS.save(deps.as_mut().storage, 1, &EpochInfo {
+            start_time: env.block.time.seconds(),
+            end_time: env.block.time.seconds() + 250,
+            total_distribution: Uint128::zero(),
+            is_distributed: false,
+            total_epoch_staked: Uint128::zero(),
+            last_processed_index: 0,
+        }).unwrap();
+
+        deps
     }
 
     #[test]
     fn proper_initialization() {
-        let (deps, _) = setup_contract();
+        let deps = setup_contract();
         
+        // Query the state after initialization
         let config = POLL_CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(config.capy_core, deps.api.addr_validate("capy_core").unwrap());
         assert_eq!(config.poll_creator, deps.api.addr_validate("creator").unwrap());
@@ -548,7 +570,193 @@ mod tests {
         assert_eq!(config.no_token, deps.api.addr_validate("no_token").unwrap());
         assert!(!config.is_resolved);
         assert_eq!(config.total_staked, Uint128::zero());
+
+        // Check initial epoch setup
+        let epoch_duration = EPOCH_DURATION.load(deps.as_ref().storage).unwrap();
+        assert_eq!(epoch_duration, 250); // 1000/4
+        
+        let num_epochs = NUM_EPOCHS.load(deps.as_ref().storage).unwrap();
+        assert_eq!(num_epochs, 4u64);
+        
+        let current_epoch = CURRENT_EPOCH.load(deps.as_ref().storage).unwrap();
+        assert_eq!(current_epoch, 1u64);
+    }
+
+    #[test]
+    fn test_stake() {
+        let mut deps = setup_contract();
+
+        // beneficiary can stake
+        let info = mock_info("user1", &coins(2, "token"));
+        
+        // Mock USDE balance query
+        deps.querier.update_wasm(|query| match query {
+            cosmwasm_std::WasmQuery::Smart { 
+                contract_addr: _, 
+                msg 
+            } => {
+                if msg.as_slice() == to_json_binary(&cw20::Cw20QueryMsg::Balance { 
+                    address: "user1".to_string() 
+                }).unwrap().as_slice() {
+                    SystemResult::Ok(ContractResult::Ok(to_json_binary(&cw20::BalanceResponse { 
+                        balance: Uint128::new(1000) 
+                    }).unwrap()))
+                } else {
+                    SystemResult::Ok(ContractResult::Ok(to_json_binary(&true).unwrap())) // For contract validation
+                }
+            },
+            _ => panic!("Unexpected query"),
+        });
+
+        let msg = PollExecuteMsg::Stake {
+            amount: Uint128::new(100),
+            position: true,
+        };
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        // Verify response
+        assert_eq!(1, res.messages.len());
+        assert_eq!(
+            res.attributes,
+            vec![
+                ("action", "stake"),
+                ("user", "user1"),
+                ("amount", "100"),
+                ("position", "true"),
+                ("epoch", "1"),
+            ]
+        );
+
+        // should have correct stake amount
+        let total_yes = TOTAL_YES_STAKED.load(deps.as_ref().storage).unwrap();
+        assert_eq!(total_yes, Uint128::new(100));
+
+        let stakes = USER_STAKES
+            .load(deps.as_ref().storage, (&Addr::unchecked("user1"), 1))
+            .unwrap();
+        assert_eq!(stakes.len(), 1);
+        assert_eq!(stakes[0].amount, Uint128::new(100));
+        assert_eq!(stakes[0].position, true);
+        assert_eq!(stakes[0].withdrawn, false);
+    }
+
+    #[test]
+    fn test_stake_validation() {
+        let mut deps = setup_contract();
+
+        // Try to stake with insufficient balance
+        let info = mock_info("user1", &coins(2, "token"));
+        deps.querier.update_wasm(|query| match query {
+            cosmwasm_std::WasmQuery::Smart { 
+                contract_addr: _, 
+                msg 
+            } => {
+                if msg.as_slice() == to_json_binary(&cw20::Cw20QueryMsg::Balance { 
+                    address: "user1".to_string() 
+                }).unwrap().as_slice() {
+                    SystemResult::Ok(ContractResult::Ok(to_json_binary(&cw20::BalanceResponse { 
+                        balance: Uint128::new(50) 
+                    }).unwrap()))
+                } else {
+                    SystemResult::Ok(ContractResult::Ok(to_json_binary(&true).unwrap()))
+                }
+            },
+            _ => panic!("Unexpected query"),
+        });
+
+        let msg = PollExecuteMsg::Stake {
+            amount: Uint128::new(100),
+            position: true,
+        };
+        let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            ContractError::AddressInsufficientBalance("user1".to_string()).to_string()
+        );
+
+        // Try to stake after poll ended
+        let mut env = mock_env();
+        env.block.time = env.block.time.plus_seconds(1001);
+        let msg = PollExecuteMsg::Stake {
+            amount: Uint128::new(50),
+            position: true,
+        };
+        let err = execute(deps.as_mut(), env, info, msg).unwrap_err();
+        assert_eq!(err.to_string(), ContractError::PollEnded {}.to_string());
+    }
+
+    #[test]
+    fn test_resolve_poll() {
+        let mut deps = setup_contract();
+
+        // Try to resolve before poll ends
+        let info = mock_info("capy_core", &coins(2, "token"));
+        let msg = PollExecuteMsg::ResolvePoll {
+            winning_position: true,
+        };
+        let err = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap_err();
+        assert_eq!(err.to_string(), ContractError::PollStillActive {}.to_string());
+
+        // Resolve after poll ends
+        let mut env = mock_env();
+        env.block.time = env.block.time.plus_seconds(1001);
+        let res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+        // Verify response - expect 1 message for blitz mechanism
+        assert_eq!(1, res.messages.len());
+
+        // Verify state changes
+        let config = POLL_CONFIG.load(deps.as_ref().storage).unwrap();
+        assert!(config.is_resolved);
+        assert_eq!(config.winning_position, Some(true));
+    }
+
+    #[test]
+    fn test_withdraw_stake() {
+        let mut deps = setup_contract();
+        let mut env = mock_env();
+        
+        // First stake some tokens
+        let info = mock_info("user1", &coins(2, "token"));
+        deps.querier.update_wasm(|query| match query {
+            cosmwasm_std::WasmQuery::Smart { contract_addr: _, msg } => {
+                SystemResult::Ok(ContractResult::Ok(to_json_binary(&cw20::BalanceResponse { 
+                    balance: Uint128::new(1000) 
+                }).unwrap()))
+            },
+            _ => panic!("Unexpected query"),
+        });
+
+        let msg = PollExecuteMsg::Stake {
+            amount: Uint128::new(100),
+            position: true,
+        };
+        execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+        // Try to withdraw before poll ends
+        let msg = PollExecuteMsg::WithdrawStake {};
+        let err = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+        assert_eq!(err.to_string(), ContractError::PollStillActive {}.to_string());
+
+        // Move time forward and resolve poll
+        env.block.time = env.block.time.plus_seconds(1001);
+        let resolve_info = mock_info("capy_core", &coins(2, "token"));
+        let msg = PollExecuteMsg::ResolvePoll {
+            winning_position: true,
+        };
+        execute(deps.as_mut(), env.clone(), resolve_info, msg).unwrap();
+
+        // Now withdraw should succeed
+        let msg = PollExecuteMsg::WithdrawStake {};
+        let res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap();
+
+        // Verify response
+        assert_eq!(1, res.messages.len()); // Should have transfer message
+
+        // Try to withdraw again
+        let err = execute(deps.as_mut(), env, info, msg).unwrap_err();
+        assert_eq!(err.to_string(), ContractError::NoStakesToWithdraw {}.to_string());
     }
 }
 
-use cosmwasm_std::{CosmosMsg, WasmMsg}; 
+use cosmwasm_std::{CosmosMsg, WasmMsg};
