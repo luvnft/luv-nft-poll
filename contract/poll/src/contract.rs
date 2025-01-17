@@ -1,17 +1,16 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, SubMsg, Uint128
+    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, SubMsg, Uint128, Api
 };
 use cw2::set_contract_version;
+use cw20::{Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
 
 use crate::{
     error::ContractError,
     msg::{
-        EpochInfoResponse, ExecuteMsg as PollExecuteMsg, PollInfoResponse, InstantiateMsg as PollInstantiateMsg, QueryMsg as PollQueryMsg,
-        UserStakesResponse,
+        EpochInfoResponse, ExecuteMsg as PollExecuteMsg, InstantiateMsg as PollInstantiateMsg, PollInfoResponse, QueryMsg as PollQueryMsg, UserStakesResponse
     },
     state::{
-        EpochInfo, PollConfig, BATCH_SIZE, CURRENT_EPOCH, EPOCH_DURATION, EPOCHS, EPOCH_STAKERS,
-        NUM_EPOCHS, POLL_CONFIG, TOTAL_NO_STAKED, TOTAL_YES_STAKED, USER_STAKES,
+        EpochInfo, PollConfig, Stake, BATCH_SIZE, CURRENT_EPOCH, EPOCHS, EPOCH_DURATION, EPOCH_STAKERS, NUM_EPOCHS, POLL_CONFIG, TOTAL_NO_STAKED, TOTAL_YES_STAKED, USER_STAKES
     },
 };
 
@@ -515,10 +514,10 @@ fn implement_blitz(deps: DepsMut, env: Env, config: &PollConfig) -> Result<Respo
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::coins;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier};
+    use cosmwasm_std::{coins, MemoryStorage, OwnedDeps};
 
-    fn setup_contract() -> (cosmwasm_std::OwnedDeps<_, _, _>, Env) {
+    fn setup_contract() -> (OwnedDeps<MemoryStorage, MockApi, MockQuerier>, cosmwasm_std::Env) {
         let mut deps = mock_dependencies();
         let env = mock_env();
         let info = mock_info("creator", &coins(1000, "earth"));
