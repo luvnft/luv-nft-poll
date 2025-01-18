@@ -9,41 +9,47 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
-    #[error("Poll has ended")]
-    PollEnded {},
+    #[error("Invalid duration. Maximum allowed is {max} seconds")]
+    InvalidDuration { max: u64 },
 
-    #[error("Poll still active")]
-    PollStillActive {},
-
-    #[error("Poll already resolved")]
-    PollAlreadyResolved {},
-
-    #[error("Cannot stake zero amount")]
-    ZeroStake {},
+    #[error("Invalid XION denom")]
+    InvalidXionDenom {},
 
     #[error("Invalid address: {0}")]
     InvalidAddress(String),
 
-    #[error("Empty code at address: {0}")]
+    #[error("Address has no code: {0}")]
     AddressEmptyCode(String),
 
-    #[error("Insufficient balance for address: {0}")]
-    AddressInsufficientBalance(String),
+    #[error("No XION payment found")]
+    NoXionPayment {},
+
+    #[error("Invalid payment amount")]
+    InvalidPaymentAmount {},
+
+    #[error("Poll not resolved")]
+    PollNotResolved {},
+
+    #[error("Poll already resolved")]
+    PollAlreadyResolved {},
+
+    #[error("Poll has ended")]
+    PollEnded {},
+
+    #[error("Poll is still active")]
+    PollStillActive {},
 
     #[error("Failed inner call")]
     FailedInnerCall {},
 
-    #[error("Invalid epoch")]
-    InvalidEpoch {},
-
     #[error("Epoch not started")]
     EpochNotStarted {},
 
-    #[error("Epoch already distributed")]
-    EpochAlreadyDistributed {},
-
     #[error("Epoch not ended")]
     EpochNotEnded {},
+
+    #[error("Epoch already distributed")]
+    EpochAlreadyDistributed {},
 
     #[error("No stakes to withdraw")]
     NoStakesToWithdraw {},

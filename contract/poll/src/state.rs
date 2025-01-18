@@ -6,14 +6,13 @@ use cw_storage_plus::{Item, Map};
 pub struct PollConfig {
     pub capy_core: Addr,
     pub poll_creator: Addr,
-    pub usde_token: Addr,
-    pub susde_token: Addr,
     pub yes_token: Addr,
     pub no_token: Addr,
     pub end_timestamp: u64,
     pub total_staked: Uint128,
     pub is_resolved: bool,
     pub winning_position: Option<bool>,
+    pub denom: String,
 }
 
 #[cw_serde]
@@ -53,4 +52,10 @@ pub const BATCH_SIZE: u64 = 100;
 pub const EPOCH_1_DISTRIBUTION: u64 = 3657;
 pub const EPOCH_2_DISTRIBUTION: u64 = 2743;
 pub const EPOCH_3_DISTRIBUTION: u64 = 2058;
-pub const EPOCH_4_DISTRIBUTION: u64 = 1542; 
+pub const EPOCH_4_DISTRIBUTION: u64 = 1542;
+
+pub fn calculate_epoch_distribution(epoch_number: u64) -> Uint128 {
+    // Simple distribution calculation - can be adjusted based on requirements
+    let base_distribution = Uint128::new(1000000);
+    base_distribution.multiply_ratio(epoch_number, 1u64)
+} 
