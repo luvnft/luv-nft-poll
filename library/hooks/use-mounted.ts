@@ -1,11 +1,11 @@
-import * as React from "react";
+import { useEffect, useState } from 'react';
 
-export function useMounted() {
-  const [mounted, setMounted] = React.useState(false);
+export const useMounted = () => {
+  const [mounted, setMounted] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
   }, []);
 
   return mounted;
-}
+};

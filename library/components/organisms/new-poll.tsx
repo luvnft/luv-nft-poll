@@ -1,11 +1,16 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowDown, Info } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useAccount } from "wagmi";
+import { useXionProtocol } from "../../hooks/use-xion-protocol";
+import { useAbstraxionAccount, useAbstraxionSigningClient, useModal, useAbstraxionClient } from "@burnt-labs/abstraxion";
+// import { Dialog, DialogContent, DialogTrigger } from "../atoms/dialog";
+// import { Button } from "../atoms/button";
+// import { Input } from "../atoms/input";
+// import { Label } from "../atoms/label";
+import { ArrowDown, Info } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod/dist/zod.js";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { Button } from "@/components/atoms/button";
 import {
@@ -46,9 +51,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/atoms/tooltip";
-import useCapyProtocol from "@/hooks/use-capy-protocol-new";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
+
+
+interface FormData {
+  question: string;
+  avatar: string;
+  description: string;
+  duration: number;
+  yesTokenName: string;
+  yesTokenSymbol: string;
+  noTokenName: string;
+  noTokenSymbol: string;
+}
 
 const FormSchema = z.object({
   question: z.string().min(1, { message: "Question is required" }),
@@ -70,9 +86,9 @@ const NewPoll = () => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
-  const { address } = useAccount();
+  const { createPoll } = useXionProtocol();
+  const { data: account } = useAbstraxionAccount();
   const isMounted = useMounted();
-  const { createPoll } = useCapyProtocol();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -92,91 +108,92 @@ const NewPoll = () => {
   const queryClient = useQueryClient(); 
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    if (!address) {
+    if (!account?.bech32Address) {
       toast.error("Please connect wallet");
       return;
     }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    try {
-      const durationInSeconds = getDurationInSeconds(
-        data.durationValue,
-        data.durationUnit
+  try {
+    const durationInSeconds = getDurationInSeconds(
+      data.durationValue,
+      data.durationUnit
+    );
+
+    await createPoll({
+      question: data.question,
+      avatar: data.avatar || "",
+      rule: data.rule || "",
+      description: "", // Added missing required field
+      duration: BigInt(durationInSeconds),
+      yesTokenName: data.yesTokenName,
+      yesTokenSymbol: data.yesTokenSymbol,
+      noTokenName: data.noTokenName,
+      noTokenSymbol: data.noTokenSymbol,
+    });
+
+    toast.success("Poll created successfully!");
+    form.reset();
+    setOpen(false);
+  } catch (error) {
+    console.error("Error creating poll:", error);
+    if (error instanceof Error && error.message.includes("0xe450d38c")) {
+      toast.error(
+        "Please fund your wallet with USDe tokens to create a poll"
       );
-
-      await createPoll({
-        question: data.question,
-        avatar: data.avatar || "",
-        rule: data.rule || "",
-        duration: BigInt(durationInSeconds),
-        yesTokenName: data.yesTokenName,
-        yesTokenSymbol: data.yesTokenSymbol,
-        noTokenName: data.noTokenName,
-        noTokenSymbol: data.noTokenSymbol,
-      });
-
-      toast.success("Poll created successfully!");
-      form.reset();
-      setOpen(false);
-    } catch (error) {
-      console.error("Error creating poll:", error);
-      if (error instanceof Error && error.message.includes("0xe450d38c")) {
-        toast.error(
-          "Please fund your wallet with USDe tokens to create a poll"
-        );
-      } else {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to create poll"
-        );
-      }
-    } finally {
-      setOpen(false);
-      setIsSubmitting(false);
-
-      queryClient.invalidateQueries({ queryKey: ["prediction-markets"] });
+    } else {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create poll"
+      );
     }
+  } finally {
+    setOpen(false);
+    setIsSubmitting(false);
+
+    queryClient.invalidateQueries({ queryKey: ["prediction-markets"] });
+  }
+};
+
+const getDurationInSeconds = (value: number, unit: string): number => {
+  const multipliers = {
+    seconds: 1,
+    minutes: 60,
+    hours: 3600,
+    days: 86400,
+    weeks: 604800,
   };
+  return value * multipliers[unit as keyof typeof multipliers];
+};
 
-  const getDurationInSeconds = (value: number, unit: string): number => {
-    const multipliers = {
-      seconds: 1,
-      minutes: 60,
-      hours: 3600,
-      days: 86400,
-      weeks: 604800,
-    };
-    return value * multipliers[unit as keyof typeof multipliers];
-  };
+const content = (
+  <Form {...form}>
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+    >
+      <div className="flex flex-col gap-2">
+        <FormLabel>Poll Details</FormLabel>
+        <FormField
+          control={form.control}
+          name="question"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input placeholder="Poll Question" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-  const content = (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-4"
-      >
-        <div className="flex flex-col gap-2">
-          <FormLabel>Poll Details</FormLabel>
-          <FormField
-            control={form.control}
-            name="question"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="Poll Question" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="avatar"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="Avatar URL (optional)" {...field} />
+        <FormField
+          control={form.control}
+          name="avatar"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+              <Input placeholder="Avatar URL (optional)" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -207,7 +224,7 @@ const NewPoll = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>How long the poll will be active</p>
-                </TooltipContent>
+                  </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </FormLabel>
@@ -231,8 +248,7 @@ const NewPoll = () => {
                 </FormItem>
               )}
             />
-
-            <FormField
+              <FormField
               control={form.control}
               name="durationUnit"
               render={({ field }) => (
@@ -350,7 +366,7 @@ const NewPoll = () => {
         <DialogContent className="flex flex-col gap-2 sm:max-w-[425px] bg-white sm:rounded-2xl rounded-2xl">
           <DialogHeader>
             <DialogTitle>Create New Poll</DialogTitle>
-          </DialogHeader>
+            </DialogHeader>
           {content}
         </DialogContent>
       </Dialog>
@@ -377,6 +393,7 @@ const NewPoll = () => {
       </DrawerContent>
     </Drawer>
   );
+
 };
 
 export default NewPoll;

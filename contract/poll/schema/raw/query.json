@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "get_poll_info"
+      ],
+      "properties": {
+        "get_poll_info": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_epoch_info"
+      ],
+      "properties": {
+        "get_epoch_info": {
+          "type": "object",
+          "required": [
+            "epoch_number"
+          ],
+          "properties": {
+            "epoch_number": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_user_stakes_for_epoch"
+      ],
+      "properties": {
+        "get_user_stakes_for_epoch": {
+          "type": "object",
+          "required": [
+            "epoch_number",
+            "user"
+          ],
+          "properties": {
+            "epoch_number": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "user": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_total_staked"
+      ],
+      "properties": {
+        "get_total_staked": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

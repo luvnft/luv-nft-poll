@@ -22,7 +22,8 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     
     // Initialize owner (poll contract)
-    initialize_owner(deps.storage, deps.api, Some(&info.sender.to_string()))?;
+    initialize_owner(deps.storage, deps.api, Some(&info.sender.to_string()))
+        .map_err(|_| ContractError::Unauthorized {})?;
     
     // Initialize CW20 token
     cw20_instantiate(deps, env, info, msg)
@@ -54,6 +55,7 @@ pub fn execute(
     }
 }
 
+
 pub fn execute_mint(
     deps: DepsMut,
     env: Env,
@@ -76,6 +78,9 @@ pub fn execute_burn(
     from: String,
     amount: Uint128,
 ) -> Result<Response, ContractError> {
+    if amount.is_zero() {
+        return Err(ContractError::InvalidZeroAmount {});
+    }
     cw20_execute(
         deps,
         env,
@@ -85,23 +90,10 @@ pub fn execute_burn(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: &QueryMsg) -> Result<Binary, ContractError> {
-    //cw20_query(deps, env, msg)
- 
-    match msg {
-        QueryMsg::TokenInfo {} => {
-            let res = cw20_query(deps, env, msg.clone())?;
-            Ok(res)
-        }
-        QueryMsg::Balance { address } => {
-            let res = cw20_query(deps, env, msg.clone())?;
-            Ok(res)
-        }
-        _ => {
-            let res = cw20_query(deps, env, msg.clone())?;
-            Ok(res)
-        }
-    }
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
+    // Simply pass through to cw20_query since we don't have custom queries
+    let res = cw20_query(deps, env, msg)?;
+    Ok(res)
 }
 
 #[cfg(test)]
@@ -141,7 +133,7 @@ mod tests {
         let (deps, owner) = setup_contract();
         
         // Test token info query
-        let res = query(deps.as_ref(), mock_env(), &QueryMsg::TokenInfo {}).unwrap();
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::TokenInfo {}).unwrap();
         let token_info: TokenInfoResponse = from_json(&res).unwrap();
         
         assert_eq!(token_info.name, "Test Token");
@@ -169,7 +161,7 @@ mod tests {
         let res = query(
             deps.as_ref(),
             mock_env(),
-            &QueryMsg::Balance {
+            QueryMsg::Balance {
                 address: "recipient".to_string(),
             },
         ).unwrap();
@@ -177,7 +169,7 @@ mod tests {
         assert_eq!(balance.balance, Uint128::new(1000));
         
         // Verify total supply
-        let res = query(deps.as_ref(), mock_env(), &QueryMsg::TokenInfo {}).unwrap();
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::TokenInfo {}).unwrap();
         let token_info: TokenInfoResponse = from_json(&res).unwrap();
         assert_eq!(token_info.total_supply, Uint128::new(1000));
     }
@@ -221,7 +213,7 @@ mod tests {
         let res = query(
             deps.as_ref(),
             mock_env(),
-            &QueryMsg::Balance {
+            QueryMsg::Balance {
                 address: owner.to_string(),
             },
         ).unwrap();
@@ -229,7 +221,7 @@ mod tests {
         assert_eq!(balance.balance, Uint128::new(600));
         
         // Verify total supply after burn
-        let res = query(deps.as_ref(), mock_env(), &QueryMsg::TokenInfo {}).unwrap();
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::TokenInfo {}).unwrap();
         let token_info: TokenInfoResponse = from_json(&res).unwrap();
         assert_eq!(token_info.total_supply, Uint128::new(600));
     }
@@ -281,7 +273,7 @@ mod tests {
         let res = query(
             deps.as_ref(),
             mock_env(),
-            &QueryMsg::Balance {
+            QueryMsg::Balance {
                 address: "recipient".to_string(),
             },
         ).unwrap();
@@ -292,7 +284,7 @@ mod tests {
         let res = query(
             deps.as_ref(),
             mock_env(),
-            &QueryMsg::Balance {
+            QueryMsg::Balance {
                 address: owner.to_string(),
             },
         ).unwrap();

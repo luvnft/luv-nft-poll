@@ -1,15 +1,16 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 
+use crate::state::PollActivity;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     pub capy_core: String,
     pub poll_creator: String,
-    pub usde_token: String,
-    pub susde_token: String,
-    pub duration: u64,
     pub yes_token: String,
     pub no_token: String,
+    pub duration: u64,
+    pub denom: String,
 }
 
 #[cw_serde]
@@ -30,12 +31,19 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(PollInfoResponse)]
+    GetPollInfo {},
     #[returns(EpochInfoResponse)]
     GetEpochInfo { epoch_number: u64 },
     #[returns(UserStakesResponse)]
     GetUserStakesForEpoch { user: String, epoch_number: u64 },
-    #[returns(PollInfoResponse)]
-    GetPollInfo {},
+    #[returns(TotalStakedResponse)]
+    GetTotalStaked {},
+    #[returns(ActivitiesResponse)]
+    GetActivities {
+        start_after: Option<u64>,  // block height
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]
@@ -53,16 +61,24 @@ pub struct UserStakesResponse {
 }
 
 #[cw_serde]
-pub struct PollInfo {
+pub struct PollInfoResponse {
     pub end_timestamp: u64,
     pub yes_token: Addr,
     pub no_token: Addr,
     pub total_staked: Uint128,
     pub is_resolved: bool,
     pub winning_position: Option<bool>,
+    pub denom: String,
 }
 
 #[cw_serde]
-pub struct PollInfoResponse {
-    pub info: PollInfo,
+pub struct TotalStakedResponse {
+    pub total_yes: Uint128,
+    pub total_no: Uint128,
+    pub denom: String,
+}
+
+#[cw_serde]
+pub struct ActivitiesResponse {
+    pub activities: Vec<PollActivity>,
 } 

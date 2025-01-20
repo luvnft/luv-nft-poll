@@ -1,10 +1,11 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Uint128;
+use cosmwasm_std::Addr;
+
+use crate::state::MarketStats;
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub usde_token: String,
-    pub susde_token: String,
     pub initial_fee: Uint128,
     pub protocol_fee: u64,
     pub poll_code_id: u64,
@@ -23,21 +24,11 @@ pub enum ExecuteMsg {
         no_token_name: String,
         no_token_symbol: String,
     },
-    // UpdateCloneablePollAddress {
-    //     address: String,
     UpdatePollCodeId {
         code_id: u64,
     },
-    // UpdateCloneableTokenAddress {
-    //     address: String,
     UpdateTokenCodeId {
         code_id: u64,
-    },
-    UpdateUsdeTokenAddress {
-        address: String,
-    },
-    UpdateSusdeTokenAddress {
-        address: String,
     },
     SetInitialFee {
         new_fee: Uint128,
@@ -63,18 +54,23 @@ pub enum QueryMsg {
     IsPollFromFactory { poll_address: String },
     #[returns(PollDetailsResponse)]
     GetPollDetails { poll_address: String },
+    #[returns(MarketStats)]
+    GetMarketStats {},
+    #[returns(Vec<PollResponse>)]
+    ListActivePolls {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]
 pub struct ConfigResponse {
     pub owner: String,
-    pub usde_token: String,
-    pub susde_token: String,
     pub initial_fee: Uint128,
     pub protocol_fee: u64,
-    pub max_protocol_fee: u64,
     pub poll_code_id: u64,
     pub token_code_id: u64,
+    pub denom: String,
 }
 
 #[cw_serde]
