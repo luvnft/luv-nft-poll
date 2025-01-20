@@ -1,12 +1,59 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useXionProtocol } from "@/library/hooks/use-xion-protocol";
-import { useAccount } from "@burnt-labs/abstraxion";
-import { Dialog, DialogContent, DialogTrigger } from "@/library/components/atoms/dialog";
-import { Button } from "@/library/components/atoms/button";
-import { Input } from "@/library/components/atoms/input";
-import { Label } from "@/library/components/atoms/label";
-import { Loader } from "lucide-react";
+import { useXionProtocol } from "../../hooks/use-xion-protocol";
+import { useAbstraxionAccount, useAbstraxionSigningClient, useModal, useAbstraxionClient } from "@burnt-labs/abstraxion";
+// import { Dialog, DialogContent, DialogTrigger } from "../atoms/dialog";
+// import { Button } from "../atoms/button";
+// import { Input } from "../atoms/input";
+// import { Label } from "../atoms/label";
+import { ArrowDown, Info } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod/dist/zod.js";
+import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { Button } from "@/components/atoms/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/atoms/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/atoms/drawer";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/atoms/form";
+import { Input } from "@/components/atoms/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/atoms/select";
+import { Textarea } from "@/components/atoms/text-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/atoms/tooltip";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMounted } from "@/hooks/use-mounted";
+
 
 interface FormData {
   question: string;
@@ -19,190 +66,334 @@ interface FormData {
   noTokenSymbol: string;
 }
 
+const FormSchema = z.object({
+  question: z.string().min(1, { message: "Question is required" }),
+  avatar: z.string(),
+  rule: z.string(),
+  durationValue: z
+    .number()
+    .min(1, { message: "Duration must be greater than 0" }),
+  durationUnit: z.enum(["seconds", "minutes", "hours", "days", "weeks"]),
+  yesTokenName: z.string().min(1, { message: "Yes token name is required" }),
+  yesTokenSymbol: z
+    .string()
+    .min(1, { message: "Yes token symbol is required" }),
+  noTokenName: z.string().min(1, { message: "No token name is required" }),
+  noTokenSymbol: z.string().min(1, { message: "No token symbol is required" }),
+});
+
 const NewPoll = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [open, setOpen] = useState(false);
   const { createPoll } = useXionProtocol();
-  const { data: account } = useAccount();
+  const { data: account } = useAbstraxionAccount();
+  const isMounted = useMounted();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<FormData>();
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      question: "",
+      avatar: "",
+      rule: "",
+      durationValue: 1,
+      durationUnit: "days",
+      yesTokenName: "",
+      yesTokenSymbol: "",
+      noTokenName: "",
+      noTokenSymbol: "",
+    },
+  });
 
-  const onSubmit = async (data: FormData) => {
-    if (!account?.bech32Address) return;
+  const queryClient = useQueryClient(); 
 
-    try {
-      setIsLoading(true);
-      await createPoll({
-        question: data.question,
-        avatar: data.avatar,
-        description: data.description,
-        duration: data.duration,
-        yesTokenName: data.yesTokenName,
-        yesTokenSymbol: data.yesTokenSymbol,
-        noTokenName: data.noTokenName,
-        noTokenSymbol: data.noTokenSymbol,
-      });
-      setIsOpen(false);
-      reset();
-    } catch (error) {
-      console.error("Error creating poll:", error);
-    } finally {
-      setIsLoading(false);
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (!account?.bech32Address) {
+      toast.error("Please connect wallet");
+      return;
     }
+
+  setIsSubmitting(true);
+
+  try {
+    const durationInSeconds = getDurationInSeconds(
+      data.durationValue,
+      data.durationUnit
+    );
+
+    await createPoll({
+      question: data.question,
+      avatar: data.avatar || "",
+      rule: data.rule || "",
+      description: "", // Added missing required field
+      duration: BigInt(durationInSeconds),
+      yesTokenName: data.yesTokenName,
+      yesTokenSymbol: data.yesTokenSymbol,
+      noTokenName: data.noTokenName,
+      noTokenSymbol: data.noTokenSymbol,
+    });
+
+    toast.success("Poll created successfully!");
+    form.reset();
+    setOpen(false);
+  } catch (error) {
+    console.error("Error creating poll:", error);
+    if (error instanceof Error && error.message.includes("0xe450d38c")) {
+      toast.error(
+        "Please fund your wallet with USDe tokens to create a poll"
+      );
+    } else {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create poll"
+      );
+    }
+  } finally {
+    setOpen(false);
+    setIsSubmitting(false);
+
+    queryClient.invalidateQueries({ queryKey: ["prediction-markets"] });
+  }
+};
+
+const getDurationInSeconds = (value: number, unit: string): number => {
+  const multipliers = {
+    seconds: 1,
+    minutes: 60,
+    hours: 3600,
+    days: 86400,
+    weeks: 604800,
   };
+  return value * multipliers[unit as keyof typeof multipliers];
+};
+
+const content = (
+  <Form {...form}>
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+    >
+      <div className="flex flex-col gap-2">
+        <FormLabel>Poll Details</FormLabel>
+        <FormField
+          control={form.control}
+          name="question"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input placeholder="Poll Question" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="avatar"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+              <Input placeholder="Avatar URL (optional)" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="rule"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Textarea placeholder="Rules" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FormLabel className="flex items-center gap-2">
+            Duration
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>How long the poll will be active</p>
+                  </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </FormLabel>
+
+          <div className="flex items-center gap-2">
+            <FormField
+              control={form.control}
+              name="durationValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      className="w-16"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+              <FormField
+              control={form.control}
+              name="durationUnit"
+              render={({ field }) => (
+                <FormItem>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white">
+                      <SelectGroup>
+                        {["seconds", "minutes", "hours", "days", "weeks"].map(
+                          (unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <span className="text-sm font-medium">from now, poll ends</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FormLabel>Yes Token Details</FormLabel>
+          <div className="flex gap-2">
+            <FormField
+              control={form.control}
+              name="yesTokenName"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input placeholder="Token Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="yesTokenSymbol"
+              render={({ field }) => (
+                <FormItem className="w-24">
+                  <FormControl>
+                    <Input placeholder="Symbol" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FormLabel>No Token Details</FormLabel>
+          <div className="flex gap-2">
+            <FormField
+              control={form.control}
+              name="noTokenName"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input placeholder="Token Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="noTokenSymbol"
+              render={({ field }) => (
+                <FormItem className="w-24">
+                  <FormControl>
+                    <Input placeholder="Symbol" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="h-6"></div>
+
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Creating Poll..." : "Create Poll"}
+        </Button>
+      </form>
+    </Form>
+  );
+
+  if (!isMounted) return null;
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <button className="w-fit font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:scale-105 transition-all duration-200">
+            Create New Poll
+            <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
+              <ArrowDown strokeWidth={3} className="text-emerald-400" />
+            </div>
+          </button>
+        </DialogTrigger>
+        <DialogContent className="flex flex-col gap-2 sm:max-w-[425px] bg-white sm:rounded-2xl rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Poll</DialogTitle>
+            </DialogHeader>
+          {content}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:bg-[#33CB82]/80 transition-colors duration-200"
-        >
-          Create Poll
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <Label htmlFor="question">Question</Label>
-            <Input
-              id="question"
-              {...register("question", { required: "Question is required" })}
-              placeholder="What do you want to predict?"
-            />
-            {errors.question && (
-              <p className="text-red-500 text-sm">{errors.question.message}</p>
-            )}
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
+        <button className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:scale-105 transition-all duration-200">
+          Create New Poll
+          <div className="w-10 h-10 rounded-full bg-[#191A23] flex justify-center items-center">
+            <ArrowDown strokeWidth={3} className="text-emerald-400" />
           </div>
-
-          <div>
-            <Label htmlFor="avatar">Avatar URL</Label>
-            <Input
-              id="avatar"
-              {...register("avatar")}
-              placeholder="https://example.com/avatar.png"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              {...register("description", {
-                required: "Description is required",
-              })}
-              placeholder="Describe your prediction market"
-            />
-            {errors.description && (
-              <p className="text-red-500 text-sm">{errors.description.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="duration">Duration (in seconds)</Label>
-            <Input
-              id="duration"
-              type="number"
-              {...register("duration", {
-                required: "Duration is required",
-                min: {
-                  value: 60,
-                  message: "Duration must be at least 60 seconds",
-                },
-                max: {
-                  value: 2592000,
-                  message: "Duration must be at most 30 days",
-                },
-              })}
-              placeholder="Duration in seconds"
-            />
-            {errors.duration && (
-              <p className="text-red-500 text-sm">{errors.duration.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="yesTokenName">YES Token Name</Label>
-              <Input
-                id="yesTokenName"
-                {...register("yesTokenName", {
-                  required: "YES token name is required",
-                })}
-                placeholder="YES Token Name"
-              />
-              {errors.yesTokenName && (
-                <p className="text-red-500 text-sm">
-                  {errors.yesTokenName.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="yesTokenSymbol">YES Token Symbol</Label>
-              <Input
-                id="yesTokenSymbol"
-                {...register("yesTokenSymbol", {
-                  required: "YES token symbol is required",
-                })}
-                placeholder="YES"
-              />
-              {errors.yesTokenSymbol && (
-                <p className="text-red-500 text-sm">
-                  {errors.yesTokenSymbol.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="noTokenName">NO Token Name</Label>
-              <Input
-                id="noTokenName"
-                {...register("noTokenName", {
-                  required: "NO token name is required",
-                })}
-                placeholder="NO Token Name"
-              />
-              {errors.noTokenName && (
-                <p className="text-red-500 text-sm">{errors.noTokenName.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="noTokenSymbol">NO Token Symbol</Label>
-              <Input
-                id="noTokenSymbol"
-                {...register("noTokenSymbol", {
-                  required: "NO token symbol is required",
-                })}
-                placeholder="NO"
-              />
-              {errors.noTokenSymbol && (
-                <p className="text-red-500 text-sm">
-                  {errors.noTokenSymbol.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-[#33CB82] hover:bg-[#33CB82]/80"
-          >
-            {isLoading ? (
-              <Loader className="animate-spin mr-2" size={16} />
-            ) : null}
-            Create Poll
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader className="text-left">
+          <DrawerTitle className="text-2xl font-bold text-center mb-6">
+            Create New Poll
+          </DrawerTitle>
+        </DrawerHeader>
+        {content}
+      </DrawerContent>
+    </Drawer>
   );
+
 };
 
 export default NewPoll;

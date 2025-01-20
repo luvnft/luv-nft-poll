@@ -1,30 +1,35 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { ArrowDown, Loader, Timer } from "lucide-react";
+import { ArrowDown, Loader } from "lucide-react";
 import Link from "next/link";
-import { Abstraxion, useAbstraxion, useAccount } from "@burnt-labs/abstraxion";
-import { useXionProtocol } from "@/library/hooks/use-xion-protocol";
-import { PredictionMarket, RecentActivity } from "@/library/types/prediction-market";
+import { Abstraxion, useAbstraxionAccount } from "@burnt-labs/abstraxion";
+import { useXionProtocol } from "../library/hooks/use-xion-protocol";
+import { PredictionMarket, RecentActivity } from "../library/types/prediction-market";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/library/components/atoms/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../library/components/atoms/avatar";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/library/components/atoms/card";
-import NewPoll from "@/library/components/organisms/new-poll";
-import { useMounted } from "@/library/hooks/use-mounted";
-import { getInitials, isValidUrl } from "@/library/utils";
+} from "../library/components/atoms/card";
+import NewPoll from "../library/components/organisms/new-poll";
+import { useMounted } from "../library/hooks/use-mounted";
+import { getInitials, isValidUrl } from "../library/utils";
 
 const Home = () => {
   const { predictionMarkets } = useXionProtocol();
-  const { isConnected } = useAccount();
-  const { openAbstraxion } = useAbstraxion();
+  const { data: account } = useAbstraxionAccount();
   const isMounted = useMounted();
 
+  const { data: markets, isLoading, error } = predictionMarkets;
+
+  // if (isLoading) return <div>Loading...</div>;
+  // if (error) return <div>Error loading markets</div>;
+
   if (!isMounted) {
+    // return null;
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <Loader className="animate-spin text-gray-500 mt-36 mb-4" size={24} />
@@ -49,31 +54,34 @@ const Home = () => {
                 Predict. Stake. Win – No Loss, All Fun{" "}
               </h1>
               <p className="text-lg md:text-xl font-mono mb-4">
-                The first no-loss prediction market with memecoins. Stake USDE,
+                The first no-loss prediction market with memecoins. Stake XION,
                 receive meme tokens, and predict with no risk—powered by memes.{" "}
               </p>
-              {isConnected ? (
+              <NewPoll />
+              {/* {isConnected ? (
                 <NewPoll />
               ) : (
-                <button
-                  onClick={openAbstraxion}
-                  className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:bg-[#33CB82]/80 transition-colors duration-200"
-                >
-                  Connect Wallet
-                </button>
-              )}
+                // <button
+                //   onClick={() => {}}
+                //   className="font-medium px-8 py-4 rounded-3xl text-xl flex items-center gap-4 bg-[#33CB82] hover:bg-[#33CB82]/80 transition-colors duration-200"
+                // >
+                //   Connect Wallet
+                // </button>
+              )} */}
             </div>
           </div>
         </div>
       </div>
 
       <div className="flex flex-col items-center mt-8" id="polls">
-        <h2 className="text-xl md:text-5xl font-medium mb-8">Polls for you</h2>
+        <h2 className="text-xl md:text-5xl font-medium mb-8">
+          Polls for you
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {predictionMarkets.data?.map((market) => (
+          {markets?.map((market: PredictionMarket) => (
             <Link
-              key={market.pollAddress}
-              href={`/polls/${market.pollAddress}`}
+              key={market.address}
+              href={`/polls/${market.address}`}
             >
               <Card className="overflow-hidden flex flex-col justify-between h-full">
                 <CardHeader>
@@ -84,7 +92,7 @@ const Home = () => {
                           isValidUrl(market?.avatar ?? "")
                             ? market?.avatar
                             : `https://avatar.vercel.sh/${
-                                (market?.pollAddress ?? "") +
+                                (market?.address ?? "") +
                                 (market?.question ?? "")
                               }`
                         }
@@ -102,35 +110,27 @@ const Home = () => {
                   <div className="flex gap-2 mb-2">
                     <span
                       className={`px-3 py-1 rounded-full text-xs ${
-                        market.status === "active"
+                        !market.is_resolved
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {market.status}
+                      {!market.is_resolved ? "active" : "resolved"}
                     </span>
-                    {market.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-800"
-                      >
-                        {tag}
-                      </span>
-                    ))}
                   </div>
                 </CardHeader>
 
                 <CardContent>
                   <div className="flex items-center justify-between text-sm text-gray-600 mt-8">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Timer className="w-4 h-4" />
+                      <Loader className="w-4 h-4" />
                       <span>
-                        Ends {new Date(market.endDate).toLocaleDateString()}
+                        Ends {new Date(market.end_timestamp * 1000).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-green-600">
-                        ${market.poolSize.toLocaleString()}
+                        {market.total_staked} {market.denom}
                       </span>
                       <span>pool</span>
                     </div>
@@ -155,9 +155,8 @@ const Home = () => {
           </div>
 
           <div className="space-y-4">
-            {predictionMarkets.data
-              ?.flatMap((market) => market.recentActivity)
-              .map((item) => (
+            {markets?.flatMap((market: PredictionMarket) => market.recent_activity)
+              .map((item: RecentActivity) => (
                 <div
                   key={item.id}
                   className="flex items-center gap-3 justify-between"
@@ -184,18 +183,19 @@ const Home = () => {
                       {item.action}{" "}
                       <span
                         className={
-                          item.choice === "Yes"
+                          item.choice === "yes"
                             ? "text-green-600"
                             : "text-red-600"
                         }
                       >
                         {item.choice}
                       </span>{" "}
+                      {/* {item.amount && `(${item.amount})`} */}
                       at (${item.amount})
                     </div>
                   </div>
                   <div className="text-sm text-gray-500">
-                    {formatDistanceToNow(item.timestamp, { addSuffix: true })}
+                    {formatDistanceToNow(item.timestamp * 1000, { addSuffix: true })}
                   </div>
                 </div>
               ))}
@@ -214,7 +214,7 @@ const Home = () => {
         </Link>
       </div>
 
-      <Abstraxion />
+      <Abstraxion onClose={() => {}} />
     </div>
   );
 };

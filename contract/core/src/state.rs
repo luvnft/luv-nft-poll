@@ -33,6 +33,7 @@ pub const TEMP_POLL_DATA: Item<TempPollData> = Item::new("temp_poll_data");
 pub const REPLY_YES_TOKEN_INIT: u64 = 1;
 pub const REPLY_NO_TOKEN_INIT: u64 = 2;
 pub const REPLY_POLL_INIT: u64 = 3;
+pub const UNIQUE_PARTICIPANTS: Map<&Addr, bool> = Map::new("unique_participants");
 
 #[cw_serde]
 pub struct TempPollData {
@@ -44,4 +45,15 @@ pub struct TempPollData {
     pub no_token: Option<Addr>,
     pub poll_addr: Option<Addr>,
     pub duration: u64,
-} 
+}
+
+#[cw_serde]
+// #[derive(Default)]
+pub struct MarketStats {
+    pub total_value_locked: Uint128,
+    pub active_polls_count: u64,
+    pub total_polls_created: u64,
+    pub total_unique_participants: u64,
+}
+
+pub const MARKET_STATS: Item<MarketStats> = Item::new("market_stats"); 

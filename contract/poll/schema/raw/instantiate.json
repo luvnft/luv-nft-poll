@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "type": "object",
+  "required": [
+    "capy_core",
+    "denom",
+    "duration",
+    "no_token",
+    "poll_creator",
+    "yes_token"
+  ],
+  "properties": {
+    "capy_core": {
+      "type": "string"
+    },
+    "denom": {
+      "type": "string"
+    },
+    "duration": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "no_token": {
+      "type": "string"
+    },
+    "poll_creator": {
+      "type": "string"
+    },
+    "yes_token": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

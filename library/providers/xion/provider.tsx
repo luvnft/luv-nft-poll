@@ -11,7 +11,8 @@ interface XionProviderProps {
 }
 
 const treasuryConfig = {
-  treasury: "xion1qt2s536y5t3ftpt6z4d4ym0pug0lmcaaetcwjs74z6kvzfy9tekq7yqqhg", // Example XION treasury instance for executing seat contract
+  //treasury: "xion1qt2s536y5t3ftpt6z4d4ym0pug0lmcaaetcwjs74z6kvzfy9tekq7yqqhg", // Example XION treasury instance for executing seat contract
+  treasury: "xion1umq0n7jxj6nvlmdcyz4a0zdlnx9xdqqafjmgwn8zhj4g2taccvdqpgluw7",
   gasPrice: "0uxion",
 
   // rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
@@ -20,10 +21,8 @@ const treasuryConfig = {
   
 export const XionProvider = ({ children }: XionProviderProps) => {
   return (
-    <QueryClientProvider client={queryClient}>
       <AbstraxionProvider config={treasuryConfig}>
         {children}
       </AbstraxionProvider>
-    </QueryClientProvider>
   );
 }; 

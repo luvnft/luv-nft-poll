@@ -1,6 +1,5 @@
 use cosmwasm_schema::write_api;
-
-use xion_capypolls_poll::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use xion_capypolls_core::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {
@@ -8,4 +7,4 @@ fn main() {
         execute: ExecuteMsg,
         query: QueryMsg,
     }
-} 
+}

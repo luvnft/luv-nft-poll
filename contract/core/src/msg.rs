@@ -2,6 +2,8 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Uint128;
 use cosmwasm_std::Addr;
 
+use crate::state::MarketStats;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     pub initial_fee: Uint128,
@@ -52,6 +54,13 @@ pub enum QueryMsg {
     IsPollFromFactory { poll_address: String },
     #[returns(PollDetailsResponse)]
     GetPollDetails { poll_address: String },
+    #[returns(MarketStats)]
+    GetMarketStats {},
+    #[returns(Vec<PollResponse>)]
+    ListActivePolls {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]

@@ -1,17 +1,18 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, SubMsg,
-    Uint128, WasmMsg,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Order, Reply, Response, StdResult, SubMsg, Uint128, WasmMsg
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
-
+use cw_storage_plus::Bound;
+use xion_capypolls_poll::state::PollConfig;
+use xion_capypolls_poll::msg::InstantiateMsg as PollInstantiateMsg;
 use crate::{
     error::ContractError,
     msg::{
         ConfigResponse, ExecuteMsg, InstantiateMsg, PollCountResponse, PollDetailsResponse, PollResponse,
         QueryMsg,
     },
-    state::{Config, PollInfo, TempPollData, CONFIG, POLLS, POLL_COUNT, POLL_SEQUENCE, TEMP_POLL_DATA},
+    state::{Config, MarketStats, PollInfo, TempPollData, CONFIG, MARKET_STATS, POLLS, POLL_COUNT, POLL_SEQUENCE, TEMP_POLL_DATA, UNIQUE_PARTICIPANTS},
 };
 
 const CONTRACT_NAME: &str = "crates.io:xion-capypolls-core";
@@ -50,6 +51,15 @@ pub fn instantiate(
 
     CONFIG.save(deps.storage, &config)?;
     POLL_COUNT.save(deps.storage, &0u64)?;
+
+    // Initialize market stats
+    let market_stats = MarketStats {
+        total_value_locked: Uint128::zero(),
+        active_polls_count: 0,
+        total_polls_created: 0,
+        total_unique_participants: 0,
+    };
+    MARKET_STATS.save(deps.storage, &market_stats)?;
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -126,8 +136,49 @@ pub fn execute_create_poll(
         REPLY_YES_TOKEN_INIT,
     );
 
+    // Create NO token
+    let no_token_init = cw20_base::msg::InstantiateMsg {
+        name: no_token_name,
+        symbol: no_token_symbol,
+        decimals: 18,
+        initial_balances: vec![],
+        mint: Some(cw20::MinterResponse {
+            minter: info.sender.to_string(),
+            cap: None,
+        }),
+        marketing: None,
+    };
+
+    let no_token_instantiate = SubMsg::reply_on_success(
+        WasmMsg::Instantiate {
+            admin: Some(info.sender.to_string()),
+            code_id: config.token_code_id,
+            msg: to_json_binary(&no_token_init)?,
+            funds: vec![],
+            label: format!("NO Token for Poll {}", question),
+        },
+        REPLY_NO_TOKEN_INIT,
+    );
+
+    // Update market stats
+    MARKET_STATS.update(deps.storage, |mut stats| -> StdResult<_> {
+        stats.active_polls_count += 1;
+        stats.total_polls_created += 1;
+        stats.total_unique_participants += 1;
+        Ok(stats)
+    })?;
+
+    if !UNIQUE_PARTICIPANTS.may_load(deps.storage, &info.sender)?.unwrap_or(false) {
+        UNIQUE_PARTICIPANTS.save(deps.storage, &info.sender, &true)?;
+        MARKET_STATS.update(deps.storage, |mut stats| -> StdResult<_> {
+            stats.total_unique_participants += 1;
+            Ok(stats)
+        })?;
+    }
+
     Ok(Response::new()
         .add_submessage(yes_token_instantiate)
+        .add_submessage(no_token_instantiate)
         .add_attribute("action", "create_poll")
         .add_attribute("creator", info.sender))
 }
@@ -300,6 +351,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetPollDetails { poll_address } => {
             to_json_binary(&query_poll_details(deps, poll_address)?)
         }
+        QueryMsg::GetMarketStats {} => to_json_binary(&query_market_stats(deps)?),
+        QueryMsg::ListActivePolls { start_after, limit } => {
+            to_json_binary(&query_active_polls(deps, start_after, limit)?)
+        }
     }
 }
 
@@ -345,6 +400,132 @@ fn query_poll_details(deps: Deps, poll_address: String) -> StdResult<PollDetails
         exists: poll_info.is_some(),
         description: poll_info.map(|p| p.description),
     })
+}
+
+pub fn query_market_stats(deps: Deps) -> StdResult<MarketStats> {
+    MARKET_STATS.load(deps.storage)
+}
+
+fn query_active_polls(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<Vec<PollResponse>> {
+    let limit = limit.unwrap_or(10) as usize;
+    // let addr = start_after.map(|s| deps.api.addr_validate(&s)).transpose()?;
+    // let start = addr.map(|a| Bound::exclusive(&a));
+
+    let addr = start_after.map(|s| deps.api.addr_validate(&s)).transpose()?;
+    let start = addr.as_ref().map(|a| Bound::exclusive(a));
+
+
+    POLLS
+        .range(deps.storage, start, None, Order::Ascending)
+        .filter(|r| match r {
+            Ok((addr, _)) => {
+                let poll_config: PollConfig = deps.querier.query_wasm_smart(addr, &QueryMsg::GetConfig {}).unwrap();
+                !poll_config.is_resolved
+            },
+            Err(_) => false,
+        })
+        .take(limit)
+        .map(|item| {
+            let (addr, _) = item?;
+            Ok(PollResponse {
+                address: addr.to_string(),
+            })
+        })
+        .collect()
+}
+
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
+    match msg.id {
+        REPLY_YES_TOKEN_INIT => {
+            let result = msg.result.into_result().map_err(|_| ContractError::InstantiateFailed {})?;
+            let contract_address = result.events
+                .iter()
+                .flat_map(|event| event.attributes.iter())
+                .find(|attr| attr.key == "_contract_address")
+                .map(|attr| attr.value.clone())
+                .ok_or(ContractError::InstantiateFailed {})?;
+
+            let mut temp_data = TEMP_POLL_DATA.load(deps.storage)?;
+            temp_data.yes_token = Some(deps.api.addr_validate(&contract_address)?);
+            TEMP_POLL_DATA.save(deps.storage, &temp_data)?;
+            Ok(Response::new())
+        }
+        REPLY_NO_TOKEN_INIT => {
+            let result = msg.result.into_result().map_err(|_| ContractError::InstantiateFailed {})?;
+            let contract_address = result.events
+                .iter()
+                .flat_map(|event| event.attributes.iter())
+                .find(|attr| attr.key == "_contract_address")
+                .map(|attr| attr.value.clone())
+                .ok_or(ContractError::InstantiateFailed {})?;
+
+            let mut temp_data = TEMP_POLL_DATA.load(deps.storage)?;
+            temp_data.no_token = Some(deps.api.addr_validate(&contract_address)?);
+            TEMP_POLL_DATA.save(deps.storage, &temp_data)?;
+            
+            // Now create the poll contract
+            let poll_init = PollInstantiateMsg {
+                capy_core: env.contract.address.to_string(),
+                poll_creator: temp_data.creator.to_string(),
+                yes_token: temp_data.yes_token.unwrap().to_string(),
+                no_token: temp_data.no_token.unwrap().to_string(),
+                duration: temp_data.duration,
+                denom: "uxion".to_string(),
+            };
+
+            let config = CONFIG.load(deps.storage)?;
+            let poll_instantiate = SubMsg::reply_on_success(
+                WasmMsg::Instantiate {
+                    admin: Some(temp_data.creator.to_string()),
+                    code_id: config.poll_code_id,
+                    msg: to_json_binary(&poll_init)?,
+                    funds: vec![],
+                    label: format!("Poll for {}", temp_data.question),
+                },
+                REPLY_POLL_INIT,
+            );
+            Ok(Response::new().add_submessage(poll_instantiate))
+        }
+        REPLY_POLL_INIT => {
+            let result = msg.result.into_result().map_err(|_| ContractError::InstantiateFailed {})?;
+            let contract_address = result.events
+                .iter()
+                .flat_map(|event| event.attributes.iter())
+                .find(|attr| attr.key == "_contract_address")
+                .map(|attr| attr.value.clone())
+                .ok_or(ContractError::InstantiateFailed {})?;
+
+            let temp_data = TEMP_POLL_DATA.load(deps.storage)?;
+            let poll_addr = deps.api.addr_validate(&contract_address)?;
+            
+            // Save poll info
+            let poll_info = PollInfo {
+                creator: temp_data.creator,
+                question: temp_data.question,
+                avatar: temp_data.avatar,
+                description: temp_data.description,
+                yes_token: temp_data.yes_token.unwrap(),
+                no_token: temp_data.no_token.unwrap(),
+                poll_addr: poll_addr.clone(),
+            };
+            
+            POLLS.save(deps.storage, &poll_addr, &poll_info)?;
+            let count = POLL_COUNT.load(deps.storage)?;
+            POLL_SEQUENCE.save(deps.storage, count, &poll_addr)?;
+            POLL_COUNT.save(deps.storage, &(count + 1))?;
+            
+            Ok(Response::new()
+                .add_attribute("action", "create_poll_complete")
+                .add_attribute("poll_addr", poll_addr))
+        }
+        _ => Err(ContractError::UnknownReplyId { id: msg.id }),
+    }
 }
 
 #[cfg(test)]
@@ -404,6 +585,6 @@ mod tests {
         };
 
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(1, res.messages.len());
+        assert_eq!(2, res.messages.len());
     }
 } 

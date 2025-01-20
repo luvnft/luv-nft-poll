@@ -24,6 +24,18 @@ pub enum ContractError {
     #[error("No contract address in instantiate reply")]
     NoContractAddress {},
 
-    #[error("Unknown reply id: {id}")]
+    #[error("Failed to instantiate contract")]
+    InstantiateFailed {},
+
+    #[error("Unknown reply ID: {id}")]
     UnknownReplyId { id: u64 },
+
+    #[error("Token operation failed")]
+    TokenOperationError {},
+    
+    #[error("Invalid token address")]
+    InvalidTokenAddress {},
+    
+    #[error("Poll already exists")]
+    PollAlreadyExists {},
 } 

@@ -1,6 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
-    Response, StdResult, SubMsg, Uint128, WasmMsg,
+    entry_point, to_binary, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult, SubMsg, Uint128, WasmMsg
 };
 use cw2::set_contract_version;
 use cw20::{Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -8,18 +7,18 @@ use cw20::{Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
 use crate::{
     error::ContractError,
     msg::{
-        EpochInfoResponse, ExecuteMsg, InstantiateMsg, PollInfoResponse, QueryMsg,
-        TotalStakedResponse, UserStakesResponse,
+        ActivitiesResponse, EpochInfoResponse, ExecuteMsg, InstantiateMsg, PollInfoResponse, QueryMsg, TotalStakedResponse, UserStakesResponse
     },
     state::{
-        EpochInfo, PollConfig, Stake, BATCH_SIZE, CURRENT_EPOCH, EPOCH_DURATION, EPOCHS,
-        EPOCH_STAKERS, NUM_EPOCHS, POLL_CONFIG, TOTAL_NO_STAKED, TOTAL_YES_STAKED, USER_STAKES,
+        ActivityType, EpochInfo, PollActivity, PollConfig, Stake, ACTIVITIES, BATCH_SIZE, CURRENT_EPOCH, EPOCHS, EPOCH_DURATION, EPOCH_STAKERS, NUM_EPOCHS, POLL_CONFIG, TOTAL_NO_STAKED, TOTAL_YES_STAKED, USER_STAKES
     },
 };
+use cw_storage_plus::Bound;
 
 const CONTRACT_NAME: &str = "crates.io:xion-capypolls-poll";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const MAX_DURATION: u64 = 30 * 24 * 60 * 60; // 30 days
+pub const MIN_DURATION: u64 = 1 * 24 * 60 * 60; // 1 day
 pub const MIN_STAKE_AMOUNT: u128 = 1_000_000; // 1 XION
 pub const MAX_STAKE_AMOUNT: u128 = 1_000_000_000_000_000; // 1M XION
 
@@ -30,6 +29,10 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    // Add token validation
+    // let yes_token = deps.api.addr_validate(&msg.yes_token)?;
+    // let no_token = deps.api.addr_validate(&msg.no_token)?;
+    
     // Validate duration
     if msg.duration > MAX_DURATION {
         return Err(ContractError::InvalidDuration { max: MAX_DURATION });
@@ -187,6 +190,22 @@ pub fn execute_stake(
     let mut epoch = EPOCHS.load(deps.storage, current_epoch)?;
     epoch.total_epoch_staked += amount;
     EPOCHS.save(deps.storage, current_epoch, &epoch)?;
+
+    // Record activity
+    let activity = PollActivity {
+        user: info.sender.clone(),
+        activity_type: ActivityType::Stake,
+        amount: Some(amount),
+        position: Some(position),
+        timestamp: env.block.time.seconds(),
+        block_height: env.block.height,
+    };
+
+    ACTIVITIES.update(deps.storage, env.block.height, |existing| -> StdResult<_> {
+        let mut activities = existing.unwrap_or_default();
+        activities.push(activity);
+        Ok(activities)
+    })?;
 
     Ok(Response::new()
         .add_attribute("action", "stake")
@@ -369,12 +388,15 @@ pub fn execute_resolve_poll(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetPollInfo {} => to_binary(&query_poll_info(deps)?),
+        QueryMsg::GetPollInfo {} => to_json_binary(&query_poll_info(deps)?),
         QueryMsg::GetEpochInfo { epoch_number } => to_binary(&query_epoch_info(deps, epoch_number)?),
         QueryMsg::GetUserStakesForEpoch { user, epoch_number } => {
             to_binary(&query_user_stakes(deps, user, epoch_number)?)
-        }
+        },
         QueryMsg::GetTotalStaked {} => to_binary(&query_total_staked(deps)?),
+        QueryMsg::GetActivities { start_after, limit } => {
+            to_binary(&query_activities(deps, start_after, limit)?)
+        },
     }
 }
 
@@ -429,6 +451,24 @@ fn query_total_staked(deps: Deps) -> StdResult<TotalStakedResponse> {
         total_no,
         denom: config.denom,
     })
+}
+
+fn query_activities(
+    deps: Deps,
+    start_after: Option<u64>,
+    limit: Option<u32>,
+) -> StdResult<ActivitiesResponse> {
+    let limit = limit.unwrap_or(30) as usize;
+    let start = start_after.map(|s| Bound::exclusive(s));
+
+    let activities = ACTIVITIES
+        .range(deps.storage, start, None, Order::Descending)
+        .take(limit)
+        .flat_map(|item| item.map(|(_, acts)| acts))
+        .flatten()
+        .collect();
+
+    Ok(ActivitiesResponse { activities })
 }
 
 fn calculate_epoch_distribution(epoch_number: u64) -> Uint128 {
@@ -616,3 +656,4 @@ mod tests {
         }
     }
 }
+

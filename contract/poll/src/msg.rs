@@ -1,6 +1,8 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 
+use crate::state::PollActivity;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     pub capy_core: String,
@@ -37,6 +39,11 @@ pub enum QueryMsg {
     GetUserStakesForEpoch { user: String, epoch_number: u64 },
     #[returns(TotalStakedResponse)]
     GetTotalStaked {},
+    #[returns(ActivitiesResponse)]
+    GetActivities {
+        start_after: Option<u64>,  // block height
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]
@@ -69,4 +76,9 @@ pub struct TotalStakedResponse {
     pub total_yes: Uint128,
     pub total_no: Uint128,
     pub denom: String,
+}
+
+#[cw_serde]
+pub struct ActivitiesResponse {
+    pub activities: Vec<PollActivity>,
 } 

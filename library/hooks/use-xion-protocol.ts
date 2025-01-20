@@ -1,236 +1,221 @@
+import { useAbstraxionAccount, useAbstraxionSigningClient } from "@burnt-labs/abstraxion";
+import { useCallback, useReducer } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAbstraxionSigningClient, useAbstraxionClient, useAbstraxionAccount } from "@burnt-labs/abstraxion";
-//import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { useCallback } from "react";
+// import { useAbstraxionSigningClient, useAbstraxionClient, useAbstraxionAccount } from "@burnt-labs/abstraxion";
+// //import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
-// Contract addresses (replace with actual addresses)
-const CAPY_CORE_ADDRESS = "your_capy_core_address";
-const USDE_TOKEN_ADDRESS = "your_usde_token_address";
+// Contract addresses - replace with your deployed contract addresses
+const CORE_CONTRACT = "xion1..."; // Core factory contract address
+const POLL_CONTRACT = "xion1..."; // Poll contract address
 
-export interface PredictionMarket {
-  pollAddress: string;
-  avatar: string;
-  question: string;
-  status: "active" | "resolved";
-  poolSize: number;
-  participants: number;
-  endDate: number;
-  tags: string[];
-  recentActivity: {
-    id: string;
-    user: string;
-    action: string;
-    choice: string;
-    amount: number;
-    timestamp: number;
-    avatar: string;
+interface QueryState {
+  marketParams: {
+    page: number;
+    limit: number;
+  };
+  pollAddress?: string;
+}
+
+const initialState: QueryState = {
+  marketParams: {
+    page: 1,
+    limit: 10,
+  },
+};
+
+interface FunctionParams {
+  createPoll: {
     question: string;
-  }[];
+    avatar: string;
+    rule: string;
+    description: string;
+    duration: bigint;
+    yesTokenName: string;
+    yesTokenSymbol: string;
+    noTokenName: string;
+    noTokenSymbol: string;
+  };
+  stake: {
+    pollAddress: string;
+    amount: string;
+    position: boolean;
+  };
+  withdrawStake: {
+    pollAddress: string;
+  };
 }
 
-export interface CreatePollParams {
-  question: string;
-  avatar: string;
-  description: string;
-  duration: number;
-  yesTokenName: string;
-  yesTokenSymbol: string;
-  noTokenName: string;
-  noTokenSymbol: string;
-}
-
-export interface StakeParams {
-  pollAddress: string;
-  amount: number;
-  position: boolean; // true for YES, false for NO
-}
+const queryReducer = (state: QueryState, action: any) => {
+  switch (action.type) {
+    case "UPDATE_PARAMS":
+      return { ...state, ...action.payload };
+    default:
+      return state;
+  }
+};
 
 export const useXionProtocol = () => {
-  const { client } = useAbstraxionSigningClient();
   const { data: account } = useAbstraxionAccount();
+  const { client } = useAbstraxionSigningClient();
+  const [state, dispatch] = useReducer(queryReducer, initialState);
 
-  // Query all prediction markets
-  const predictionMarkets = useQuery({
-    queryKey: ["prediction-markets"],
-    queryFn: async () => {
-      if (!client) return [];
+  // Query fetcher functions
+  const fetchMarkets = useCallback(async () => {
+    if (!client) return [];
+    
+    const response = await client.queryContractSmart(CORE_CONTRACT, {
+      get_poll_count: {},
+    });
 
-      // Query poll count
-      const { count } = await client.queryContractSmart(CAPY_CORE_ADDRESS, {
-        get_poll_count: {},
+    const polls = [];
+    for (let i = 0; i < response.count; i++) {
+      const pollResponse = await client.queryContractSmart(CORE_CONTRACT, {
+        get_poll_at: { index: i },
       });
-
-      // Get all polls
-      const markets: PredictionMarket[] = [];
-      for (let i = 0; i < count; i++) {
-        const { address } = await client.queryContractSmart(CAPY_CORE_ADDRESS, {
-          get_poll_at: { index: i },
-        });
-
-        // Get poll details
-        const pollInfo = await client.queryContractSmart(address, {
+      
+      if (pollResponse.address) {
+        const pollDetails = await client.queryContractSmart(pollResponse.address, {
           get_poll_info: {},
         });
 
-        // Get poll details from core contract
-        const { exists, description } = await client.queryContractSmart(
-          CAPY_CORE_ADDRESS,
-          {
-            get_poll_details: { poll_address: address },
-          }
-        );
-
-        if (exists) {
-          markets.push({
-            pollAddress: address,
-            avatar: "", // TODO: Store avatar in contract
-            question: description,
-            status: pollInfo.is_resolved ? "resolved" : "active",
-            poolSize: Number(pollInfo.total_staked) / 1e18,
-            participants: 0, // TODO: Track participants
-            endDate: pollInfo.end_timestamp * 1000,
-            tags: [],
-            recentActivity: [], // TODO: Implement activity tracking
-          });
-        }
+        // Transform data with additional fields
+        polls.push({
+          ...pollDetails,
+          address: pollResponse.address,
+          status: pollDetails.is_resolved ? "resolved" : "active",
+          poolSize: pollDetails.total_staked,
+          endDate: pollDetails.end_time,
+          recentActivity: [], // TODO: Implement activity tracking
+        });
       }
+    }
+    return polls;
+  }, [client]);
 
-      return markets;
-    },
+  const fetchPoll = useCallback(async () => {
+    if (!client || !state.pollAddress) return null;
+    
+    const pollDetails = await client.queryContractSmart(state.pollAddress, {
+      get_poll_info: {},
+    });
+
+    return {
+      ...pollDetails,
+      address: state.pollAddress,
+      status: pollDetails.is_resolved ? "resolved" : "active",
+    };
+  }, [client, state.pollAddress]);
+
+  const fetchPollActivities = useCallback(async (pollAddress: string) => {
+    if (!client) return [];
+    
+    const activities = await client.queryContractSmart(pollAddress, {
+      get_activities: {
+        limit: 10
+      }
+    });
+
+    return activities.map((activity: any) => ({
+      id: `${activity.block_height}-${activity.timestamp}`,
+      user: activity.user,
+      action: activity.activity_type.toLowerCase(),
+      choice: activity.position ? "yes" : "no",
+      amount: activity.amount,
+      timestamp: activity.timestamp * 1000,
+      // ... other mappings
+    }));
+  }, [client]);
+
+  // Queries
+  const predictionMarkets = useQuery({
+    queryKey: ["prediction-markets", state.marketParams],
+    queryFn: fetchMarkets,
     enabled: !!client,
   });
 
-  // Create a new poll
-  const createPoll = useCallback(
-    async (params: CreatePollParams) => {
-      if (!client || !account?.bech32Address) {
-        throw new Error("Client or account not available");
-      }
+  const poll = useQuery({
+    queryKey: ["poll", state.pollAddress],
+    queryFn: fetchPoll,
+    enabled: !!client && !!state.pollAddress,
+  });
 
-      // First approve USDE token
-      await client.execute(
-        account.bech32Address,
-        USDE_TOKEN_ADDRESS,
-        {
-          increase_allowance: {
-            spender: CAPY_CORE_ADDRESS,
-            amount: "2000000000000000000", // 2 USDE
-          },
-        },
-        "auto"
-      );
+  // Contract functions
+  const createPoll = useCallback(async (params: FunctionParams["createPoll"]) => {
+    if (!client || !account?.bech32Address) return;
 
-      // Create poll
-      const result = await client.execute(
-        account.bech32Address,
-        CAPY_CORE_ADDRESS,
-        {
-          create_poll: {
-            question: params.question,
-            avatar: params.avatar,
-            description: params.description,
-            duration: params.duration,
-            yes_token_name: params.yesTokenName,
-            yes_token_symbol: params.yesTokenSymbol,
-            no_token_name: params.noTokenName,
-            no_token_symbol: params.noTokenSymbol,
-          },
-        },
-        "auto"
-      );
+    const msg = {
+      create_poll: {
+        question: params.question,
+        avatar: params.avatar,
+        rule: params.rule,
+        description: params.description,
+        duration: params.duration,
+        yes_token_name: params.yesTokenName,
+        yes_token_symbol: params.yesTokenSymbol,
+        no_token_name: params.noTokenName,
+        no_token_symbol: params.noTokenSymbol,
+      },
+    };
 
-      return result;
-    },
-    [client, account]
-  );
+    return client.execute(
+      account.bech32Address,
+      CORE_CONTRACT,
+      msg,
+      "auto",
+      "",
+      [{ amount: "1000000", denom: "uxion" }]
+    );
+  }, [client, account]);
 
-  // Stake in a poll
-  const stake = useCallback(
-    async (params: StakeParams) => {
-      if (!client || !account?.bech32Address) {
-        throw new Error("Client or account not available");
-      }
+  const stake = useCallback(async (params: FunctionParams["stake"]) => {
+    if (!client || !account?.bech32Address) return;
 
-      // First approve USDE token
-      await client.execute(
-        account.bech32Address,
-        USDE_TOKEN_ADDRESS,
-        {
-          increase_allowance: {
-            spender: params.pollAddress,
-            amount: params.amount.toString(),
-          },
-        },
-        "auto"
-      );
+    const msg = {
+      stake: {
+        amount: params.amount,
+        position: params.position,
+      },
+    };
 
-      // Stake in poll
-      const result = await client.execute(
-        account.bech32Address,
-        params.pollAddress,
-        {
-          stake: {
-            amount: params.amount.toString(),
-            position: params.position,
-          },
-        },
-        "auto"
-      );
+    return client.execute(
+      account.bech32Address,
+      params.pollAddress,
+      msg,
+      "auto",
+      "",
+      [{ amount: params.amount, denom: "uxion" }]
+    );
+  }, [client, account]);
 
-      return result;
-    },
-    [client, account]
-  );
+  const withdrawStake = useCallback(async (params: FunctionParams["withdrawStake"]) => {
+    if (!client || !account?.bech32Address) return;
 
-  // Resolve a poll
-  const resolvePoll = useCallback(
-    async (pollAddress: string, winningPosition: boolean) => {
-      if (!client || !account?.bech32Address) {
-        throw new Error("Client or account not available");
-      }
+    const msg = {
+      withdraw_stake: {},
+    };
 
-      const result = await client.execute(
-        account.bech32Address,
-        pollAddress,
-        {
-          resolve_poll: {
-            winning_position: winningPosition,
-          },
-        },
-        "auto"
-      );
+    return client.execute(
+      account.bech32Address,
+      params.pollAddress,
+      msg,
+      "auto"
+    );
+  }, [client, account]);
 
-      return result;
-    },
-    [client, account]
-  );
-
-  // Withdraw stake from a poll
-  const withdrawStake = useCallback(
-    async (pollAddress: string) => {
-      if (!client || !account?.bech32Address) {
-        throw new Error("Client or account not available");
-      }
-
-      const result = await client.execute(
-        account.bech32Address,
-        pollAddress,
-        {
-          withdraw_stake: {},
-        },
-        "auto"
-      );
-
-      return result;
-    },
-    [client, account]
-  );
+  // Helpers
+  const updateParams = useCallback((updates: Partial<QueryState>) => {
+    dispatch({ type: "UPDATE_PARAMS", payload: updates });
+  }, []);
 
   return {
     predictionMarkets,
+    poll,
     createPoll,
     stake,
-    resolvePoll,
     withdrawStake,
+    updateParams,
+    fetchPollActivities,
+    isConnected: !!account?.bech32Address,
+    address: account?.bech32Address,
   };
 }; 

@@ -6,6 +6,7 @@ import React from "react";
 import ConnectKitProvider from "./connectkit";
 import { ThemeProvider } from "./theme";
 import WagmiProvider from "./wagmi";
+import { XionProvider } from "./xion/provider";
 
 const queryClient = new QueryClient();
 
@@ -17,11 +18,14 @@ const RootProvider = ({ children }: { children: React.ReactNode }) => {
       enableSystem
       disableTransitionOnChange
     >
-      <WagmiProvider>
-        <QueryClientProvider client={queryClient}>
-          <ConnectKitProvider>{children}</ConnectKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
+      {/* <WagmiProvider> */}
+        <XionProvider>
+          <QueryClientProvider client={queryClient}>
+            {/* <ConnectKitProvider></ConnectKitProvider> */}
+            {children}
+          </QueryClientProvider>
+        </XionProvider>
+      {/* </WagmiProvider> */}
     </ThemeProvider>
   );
 };
