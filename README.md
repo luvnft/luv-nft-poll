@@ -1,4 +1,4 @@
-# CapyPolls
+# LUV NFT FUN
 
 > The First No-Loss Prediction Market with Memecoins, revolutionizing how we make predictions on BNB Chain
 
@@ -43,7 +43,7 @@ CapyPolls revolutionizes prediction markets through:
 ## Platform Demo
 
 1. **Sample Predictions**
-   - Visit our [Live Platform](https://capypolls.vercel.app)
+   - Visit our [Live Platform](https://poll.luvnft.com)
    - Create and participate in predictions
    - Experience no-loss prediction markets
 
