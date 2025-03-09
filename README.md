@@ -1,4 +1,4 @@
-# LUV NFT FUN
+# LUV NFT POLL
 
 > The First No-Loss Prediction Market with Memecoins, revolutionizing how we make predictions on BNB Chain
 
