@@ -8,13 +8,13 @@ import CoreLayout from "@/components/template/layout-core";
 const inter = Inter({ subsets: ["latin"] });
 
 // export const metadata: Metadata = {
-//   title: "CapyPolls - No Loss Prediction Markets",
+//   title: "🔮 POLL. - No Loss Prediction Markets", 
 //   description: "The first no-loss prediction market with memecoins",
 // };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://capypolls.vercel.app/"),
-  title: "CapyPolls",
+  metadataBase: new URL("https://poll.irl.travel"),
+  title: "🔮 POLL",
   icons: "/capypolls-logo.png",
   description: "No loss staking with memecoins",
   openGraph: {
